@@ -1,0 +1,35 @@
+<div class="row justify-content-center mt-5">
+  <div class="col-md-6">
+    <div class="card shadow">
+      <div class="card-body p-5">
+        <h2 class="card-title text-center mb-4">Iniciar Sesión</h2>
+
+        {{#if registradoExitosamente}}
+          <div class="alert alert-success">🎉 ¡Registro exitoso! Ya podés iniciar sesión.</div>
+        {{/if}}
+
+        {{#if error}}
+          <div class="alert alert-danger">❌ {{error}}</div>
+        {{/if}}
+
+        <form action="/web/login" method="POST">
+          <div class="mb-3">
+            <label class="form-label">Correo Electrónico</label>
+            <input type="email" name="email" class="form-control" value="{{valores.email}}" required placeholder="ejemplo@yojuego.com">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Contraseña</label>
+            <input type="password" name="password" class="form-control" required placeholder="Tu contraseña">
+          </div>
+
+          <button type="submit" class="btn btn-success w-100 btn-lg mt-3">Ingresar a Yo Juego</button>
+          
+          <div class="text-center mt-3">
+            <a href="/web/register" class="text-muted small">¿No tenés cuenta? Registrate acá</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

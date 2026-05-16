@@ -1,0 +1,44 @@
+<div class="row justify-content-center mt-5">
+  <div class="col-md-6">
+    <div class="card shadow">
+      <div class="card-body p-5">
+        <h2 class="card-title text-center mb-4">Crear Cuenta de Jugador</h2>
+
+        {{#if error}}
+          <div class="alert alert-danger" role="alert">❌ {{error}}</div>
+        {{/if}}
+
+        <!-- El action apunta al POST de nuestras rutas -->
+        <form action="/web/register" method="POST">
+          <div class="mb-3">
+            <label class="form-label">Correo Electrónico</label>
+            <input type="email" name="email" class="form-control" value="{{valores.email}}" required placeholder="ejemplo@yojuego.com">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Contraseña</label>
+            <input type="password" name="password" class="form-control" required placeholder="Mínimo 6 caracteres">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Posición Favorita</label>
+            <select name="posicion" class="form-select">
+              <option value="No definido">Seleccioná tu posición...</option>
+              <option value="Arquero">Arquero</option>
+              <option value="Defensor">Defensor</option>
+              <option value="Mediocampista">Mediocampista</option>
+              <option value="Delantero">Delantero</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Nivel de Habilidad (1 al 10)</label>
+            <input type="number" name="nivel" class="form-control" min="1" max="10" value="{{#if valores.nivel}}{{valores.nivel}}{{else}}5{{/if}}">
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 btn-lg mt-3">Registrarme e Ingresar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

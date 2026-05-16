@@ -1,0 +1,9 @@
+# Dependencias pesadas
+node_modules/
+
+# Variables de entorno con credenciales secretas
+.env
+
+# Archivos del sistema u otros
+.DS_Store
+npm-debug.log*
