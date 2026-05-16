@@ -1,0 +1,5 @@
+Desinstalamos dependias que no vamos a usar al final
+npm uninstall express-session passport-local - Listo
+
+Pasamos dotenv para devDepencies porque en render no lo vamos a necesitar
+npm install -D dotenv - Listo
