@@ -1,0 +1,71 @@
+<div class="container mt-5">
+  
+  <div class="text-center mb-5">
+    <h1 class="display-4 fw-bold text-success">🏟️ Cartelera de Partidos</h1>
+    <p class="lead text-muted">Anotate en los partidos disponibles del día o armá el tuyo.</p>
+  </div>
+
+  {{#if exito}}
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+      <strong>⚽ ¡Todo listo!</strong> {{exito}}
+    </div>
+  {{/if}}
+
+  {{#if error}}
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+      <strong>⚠️ Atención:</strong> {{error}}
+    </div>
+  {{/if}}
+
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {{#each partidos}}
+      <div class="col">
+        <div class="card h-100 shadow-sm border-{{#if this.estaCompleto}}secondary{{else}}success{{/if}}">
+          <div class="card-header d-flex justify-content-between align-items-center bg-transparent border-0 pt-3">
+            <span class="badge bg-secondary">Fútbol {{this.tipoCancha}}</span>
+            {{#if this.estaCompleto}}
+              <span class="badge bg-danger">Completo</span>
+            {{else}}
+              <span class="badge bg-success">Quedan {{this.cuposLibres}} lugares</span>
+            {{/if}}
+          </div>
+
+          <div class="card-body">
+            <h5 class="card-title fw-bold text-dark mb-3">📍 {{this.lugar}}</h5>
+            <p class="card-text mb-1">🗓️ <strong>Fecha:</strong> {{this.fechaFormateada}}</p>
+            <p class="card-text mb-3">⏰ <strong>Hora:</strong> {{this.hora}} hs</p>
+            
+            <a href="/partidos/{{this._id}}" class="btn btn-link btn-sm text-success p-0 fw-bold">👉 Ver lista de anotados</a>
+          </div>
+
+          <div class="card-footer bg-transparent border-0 pb-3">
+            {{#if ../isAuthenticated}}
+              {{#if this.yaInscripto}}
+                <form action="/partidos/{{this._id}}/bajarse" method="POST">
+                  <button type="submit" class="btn btn-danger w-100 shadow-sm">❌ Salir del Partido</button>
+                </form>
+              {{else}}
+                {{#if this.estaCompleto}}
+                  <button class="btn btn-outline-secondary w-100" disabled>❌ Cupos llenos</button>
+                {{else}}
+                  <form action="/partidos/{{this._id}}/unirse" method="POST">
+                    <button type="submit" class="btn btn-success w-100 shadow-sm">⚡ Unirme</button>
+                  </form>
+                {{/if}}
+              {{/if}}
+            {{else}}
+              <a href="/web/login" class="btn btn-outline-success w-100">Iniciá sesión para unirte</a>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+    {{else}}
+      <div class="col-12 text-center my-5">
+        <div class="alert alert-light p-5 border rounded-3 shadow-sm">
+          <p class="fs-4 text-muted mb-0">No hay partidos programados en la cartelera actualmente.</p>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+
+</div>

@@ -27,8 +27,10 @@ export const procesarRegistro = async (req, res) => {
 
 // Pantalla de login temporal para la redirección
 export const mostrarLogin = (req, res) => {
-  const registradoExitosamente = req.query.registered === 'true';
-  res.render('web/login', { registradoExitosamente });
+  res.render('web/login', { 
+    error: req.query.error,
+    redirect: req.query.redirect // 👈 Le pasamos la ruta original a Handlebars
+  });
 };
 
 // Procesar el formulario de Login (POST)
@@ -58,18 +60,25 @@ export const procesarLogin = async (req, res) => {
       maxAge: 15 * 60 * 1000 // Expira en 15 minutos (igual que el token)
     });
 
-    // 5. Redireccionar al Home o Dashboard del juego
-    res.redirect('/');
+    // 5. Redireccionar al destino original o al Home por defecto
+    // 💡 CAMBIAMOS req.query por req.body
+    const rutaRedireccion = req.body.redirect || '/'; 
+    
+    return res.redirect(rutaRedireccion);
+
   } catch (error) {
-    res.render('web/login', {
-      error: error.message,
-      valores: req.body
-    });
+      // Tu catch actual está perfecto porque ya lee desde req.body!
+      const origen = req.body.redirect ? `&redirect=${encodeURIComponent(req.body.redirect)}` : '';
+      res.redirect(`/web/login?error=Credenciales inválidas${origen}`);
   }
 };
 
 // Método para cerrar sesión (Limpiar la cookie)
+// En tu controllers/web/authWebController.js
 export const cerrarSesion = (req, res) => {
-  res.clearCookie('jwt');
-  res.redirect('/web/login?logout=true');
+  // 1. Chequeá que el nombre coincida con el que usaste en el login (sea 'jwt' o 'token')
+  res.clearCookie('jwt'); 
+  
+  // 2. Redirección limpia (al login con flag, o a la home con el ?exito que lee tu nuevo home.hbs)
+  res.redirect('/?exito=Sesión cerrada correctamente. ¡Volvé pronto!');
 };

@@ -1,0 +1,60 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      
+      <a href="/" class="btn btn-outline-secondary btn-sm mb-4">⬅️ Volver a la Cartelera</a>
+
+      <div class="card shadow border-0">
+        <div class="card-body p-4">
+          <h2 class="fw-bold text-success mb-3">🏟️ Detalle del Encuentro</h2>
+          <h4 class="text-dark">📍 {{partido.lugar}}</h4>
+          <p class="text-muted">Organizado por: {{partido.creador.email}}</p>
+          
+          <div class="row my-4 bg-light p-3 rounded">
+            <div class="col-6">🗓️ <strong>Fecha:</strong> {{partido.fechaFormateada}}</div>
+            <div class="col-6">⏰ <strong>Hora:</strong> {{partido.hora}} hs</div>
+            <div class="col-6 mt-2">⚽ <strong>Modalidad:</strong> Fútbol {{partido.tipoCancha}}</div>
+            <div class="col-6 mt-2">👥 <strong>Cupo Total:</strong> {{partido.cupoMaximo}} jugadores</div>
+          </div>
+
+          <h5 class="fw-bold text-secondary mb-3">📋 Convocados Confirmados ({{partido.jugadores.length}}/{{partido.cupoMaximo}})</h5>
+          <ul class="list-group shadow-sm mb-4">
+            {{#each partido.jugadores}}
+              <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                <div>
+                  <span class="fw-semibold text-dark">🏃‍♂️ {{this.email}}</span>
+                </div>
+                <span class="badge bg-success-subtle text-success border border-success px-3 py-2 rounded-pill">{{this.posicion}}</span>
+              </li>
+            {{/each}}
+            {{#unless partido.jugadores.length}}
+              <li class="list-group-item text-muted text-center py-4">No hay jugadores anotados todavía. ¡Rompé el hielo!</li>
+            {{/unless}}
+          </ul>
+
+          <div class="text-end">
+            {{#if isAuthenticated}}
+              {{#if partido.yaInscripto}}
+                <form action="/partidos/{{partido._id}}/bajarse" method="POST" class="d-inline">
+                  <button type="submit" class="btn btn-danger px-4">❌ Darme de Baja</button>
+                </form>
+              {{else}}
+                {{#if partido.estaCompleto}}
+                  <button class="btn btn-secondary px-4" disabled>❌ Partido Completo</button>
+                {{else}}
+                  <form action="/partidos/{{partido._id}}/unirse" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-success px-4">⚡ Anotarme Ahora</button>
+                  </form>
+                {{/if}}
+              {{/if}}
+            {{else}}
+              <a href="/web/login" class="btn btn-success px-4">Iniciá sesión para anotarte</a>
+            {{/if}}
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
