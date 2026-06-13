@@ -8,8 +8,19 @@
           <div class="alert alert-danger" role="alert">❌ {{error}}</div>
         {{/if}}
 
-        <!-- El action apunta al POST de nuestras rutas -->
         <form action="/web/register" method="POST">
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Nombre</label>
+              <input type="text" name="nombre" class="form-control" value="{{valores.nombre}}" required placeholder="Ej: Juan">
+            </div>
+            <div class="col-md-6 mt-3 mt-md-0">
+              <label class="form-label">Apellido</label>
+              <input type="text" name="apellido" class="form-control" value="{{valores.apellido}}" required placeholder="Ej: Perez">
+            </div>
+          </div>
+
           <div class="mb-3">
             <label class="form-label">Correo Electrónico</label>
             <input type="email" name="email" class="form-control" value="{{valores.email}}" required placeholder="ejemplo@yojuego.com">
@@ -29,11 +40,6 @@
               <option value="Mediocampista">Mediocampista</option>
               <option value="Delantero">Delantero</option>
             </select>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Nivel de Habilidad (1 al 10)</label>
-            <input type="number" name="nivel" class="form-control" min="1" max="10" value="{{#if valores.nivel}}{{valores.nivel}}{{else}}5{{/if}}">
           </div>
 
           <button type="submit" class="btn btn-primary w-100 btn-lg mt-3">Registrarme e Ingresar</button>

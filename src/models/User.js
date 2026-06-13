@@ -30,9 +30,9 @@ const UserSchema = new mongoose.Schema({
   },
   nivel: {
     type: Number,
+    default: 5,
     min: 1,
-    max: 10,
-    default: 5
+    max: 10
   },
   honor: {
     type: Number,

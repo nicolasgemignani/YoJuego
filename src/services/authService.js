@@ -2,23 +2,25 @@ import User from '../models/User.js';
 
 class AuthService {
   async registrarUsuario(datosUsuario) {
-    const { email, password, posicion, nivel } = datosUsuario;
+    // 💡 1. Capturamos los campos nuevos (nombre, apellido) y sacamos 'nivel' de la desestructuración
+    const { nombre, apellido, email, password, posicion } = datosUsuario;
 
-    // 1. Validar si el usuario ya existe
+    // 2. Validar si el usuario ya existe
     const usuarioExistente = await User.buscarPorEmail(email);
     if (usuarioExistente) {
       throw new Error('El correo electrónico ya está registrado.');
     }
 
-    // 2. Crear el nuevo usuario (el pre-save del modelo encriptará la contraseña)
+    // 3. Crear el nuevo usuario pasándole la estructura prolija
     const nuevoUsuario = new User({
+      nombre,
+      apellido,
       email,
       password,
-      posicion,
-      nivel: Number(nivel) // Nos aseguramos de que guarde un número
+      posicion
     });
 
-    // 3. Guardar en la base de datos
+    // 4. Guardar en la base de datos
     return await nuevoUsuario.save();
   }
 }

@@ -10,8 +10,23 @@ export const mostrarRegistro = (req, res) => {
 // Procesar los datos del formulario (POST)
 export const procesarRegistro = async (req, res) => {
   try {
-    // Llamamos al servicio pasando todo el req.body (email, password, posicion, nivel)
-    await authService.registrarUsuario(req.body);
+    // 1. Desestructuramos para separar lo que sirve y aislar el nivel viejo
+    const { nombre, apellido, email, password, posicion } = req.body;
+
+    // 2. Armamos un objeto limpio con los campos que sí queremos guardar
+    const datosRegistro = {
+      nombre,
+      apellido,
+      email,
+      password,
+      posicion
+    };
+
+    // 💡 Al no incluir la propiedad "nivel" en el objeto, 
+    // Mongoose va a usar el `default: 5` de tu modelo automáticamente y chau "NaN".
+    
+    // 3. Llamamos al servicio pasando solo los datos estructurados
+    await authService.registrarUsuario(datosRegistro);
     
     // Si sale bien, lo mandamos al login avisando por la URL que fue exitoso
     res.redirect('/web/login?registered=true');
