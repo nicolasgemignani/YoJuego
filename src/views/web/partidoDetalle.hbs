@@ -8,7 +8,7 @@
         <div class="card-body p-4">
           <h2 class="fw-bold text-success mb-3">🏟️ Detalle del Encuentro</h2>
           <h4 class="text-dark">📍 {{partido.lugar}}</h4>
-          <p class="text-muted">Organizado por: {{partido.creador.email}}</p>
+          <p class="text-muted">Organizado por: <strong>{{partido.creador.nombre}} {{partido.creador.apellido}}</strong> ({{partido.creador.email}})</p>
           
           <div class="row my-4 bg-light p-3 rounded">
             <div class="col-6">🗓️ <strong>Fecha:</strong> {{partido.fechaFormateada}}</div>
@@ -17,12 +17,14 @@
             <div class="col-6 mt-2">👥 <strong>Cupo Total:</strong> {{partido.cupoMaximo}} jugadores</div>
           </div>
 
-          <h5 class="fw-bold text-secondary mb-3">📋 Convocados Confirmados ({{partido.jugadores.length}}/{{partido.cupoMaximo}})</h5>
+          <h5 class="fw-bold text-success mb-3">📋 Convocados Confirmados ({{partido.jugadores.length}}/{{partido.cupoMaximo}})</h5>
           <ul class="list-group shadow-sm mb-4">
             {{#each partido.jugadores}}
               <li class="list-group-item d-flex justify-content-between align-items-center py-3">
                 <div>
-                  <span class="fw-semibold text-dark">🏃‍♂️ {{this.email}}</span>
+                  <span class="fw-semibold text-dark">🏃‍♂️ {{this.nombre}} {{this.apellido}}</span>
+                  <span class="badge bg-secondary-subtle text-secondary border ms-2">🏅 {{this.rango}}</span>
+                  <span class="text-muted small ms-1">❤️ {{this.honor}} pts</span>
                 </div>
                 <span class="badge bg-success-subtle text-success border border-success px-3 py-2 rounded-pill">{{this.posicion}}</span>
               </li>
@@ -32,15 +34,40 @@
             {{/unless}}
           </ul>
 
-          <div class="text-end">
+          <h5 class="fw-bold text-warning mb-3">⏳ Lista de Espera (Suplentes en cola)</h5>
+          <ul class="list-group shadow-sm mb-4">
+            {{#each partido.suplentes}}
+              <li class="list-group-item d-flex justify-content-between align-items-center py-3 bg-light">
+                <div>
+                  <span class="text-muted fw-bold me-2">#{{logicaSumaUno @index}}</span>
+                  <span class="fw-semibold text-dark">🏃‍♂️ {{this.nombre}} {{this.apellido}}</span>
+                  <span class="badge bg-secondary-subtle text-secondary border ms-2">🏅 {{this.rango}}</span>
+                </div>
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning px-3 py-2 rounded-pill">{{this.posicion}}</span>
+              </li>
+            {{/each}}
+            {{#unless partido.suplentes.length}}
+              <li class="list-group-item text-muted text-center py-3 border-dashed">No hay suplentes en espera.</li>
+            {{/unless}}
+          </ul>
+
+          <div class="text-end mt-4">
             {{#if isAuthenticated}}
               {{#if partido.yaInscripto}}
                 <form action="/partidos/{{partido._id}}/bajarse" method="POST" class="d-inline">
-                  <button type="submit" class="btn btn-danger px-4">❌ Darme de Baja</button>
+                  <button type="submit" class="btn btn-danger px-4">
+                    {{#if partido.esSuplente}}❌ Salir de Lista de Espera{{else}}❌ Darme de Baja{{/if}}
+                  </button>
                 </form>
               {{else}}
                 {{#if partido.estaCompleto}}
-                  <button class="btn btn-secondary px-4" disabled>❌ Partido Completo</button>
+                  {{#if partido.listaEsperaLlena}}
+                    <button class="btn btn-secondary px-4" disabled>❌ Partido y Lista Llenos</button>
+                  {{else}}
+                    <form action="/partidos/{{partido._id}}/unirse" method="POST" class="d-inline">
+                      <button type="submit" class="btn btn-warning px-4 text-dark">⏳ Anotarse como Suplente</button>
+                    </form>
+                  {{/if}}
                 {{else}}
                   <form action="/partidos/{{partido._id}}/unirse" method="POST" class="d-inline">
                     <button type="submit" class="btn btn-success px-4">⚡ Anotarme Ahora</button>
@@ -51,7 +78,6 @@
               <a href="/web/login" class="btn btn-success px-4">Iniciá sesión para anotarte</a>
             {{/if}}
           </div>
-
         </div>
       </div>
 

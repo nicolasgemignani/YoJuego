@@ -6,7 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/app.js",
     "dev": "node --watch src/app.js",
-    "seed:matches": "node src/seeds/matchSeed.js"
+    "seed:matches": "node src/seeds/matchSeed.js",
+    "seed:users": "node src/seeds/userSeed.js"
   },
   "keywords": [],
   "author": "",

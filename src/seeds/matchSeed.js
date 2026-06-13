@@ -23,26 +23,28 @@ const tiposCancha = [5, 7, 11, 5, 5, 7, 5, 11, 5, 7];
 
 const sembrarPartidos = async () => {
   try {
-    // 1. Conectar a MongoDB Atlas usando tu variable de entorno
     await mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI);
-    console.log('🔌 Conectado a MongoDB para la siembra...');
+    console.log('🔌 Conectado a MongoDB para la siembra de partidos...');
 
-    // 2. Limpiar partidos viejos para no duplicar cada vez que corras el script
+    // 1. Limpiar partidos viejos
     await Match.deleteMany({});
     console.log('🗑️ Colección de partidos limpiada.');
 
-    // 3. Buscar un usuario real para asignarlo como creador obligatorio
-    const usuarioCreador = await User.findOne();
-    if (!usuarioCreador) {
-      console.error('❌ ERROR: No hay usuarios en la base de datos. Registrate con al menos un usuario por la web antes de correr el seed.');
+    // 2. Traer TODOS los usuarios de prueba (los jugadorX@test.com)
+    const todosLosUsuarios = await User.find({ email: { $regex: '@test.com$' } });
+    
+    if (todosLosUsuarios.length === 0) {
+      console.error('❌ ERROR: No hay usuarios de prueba en la base de datos.');
+      console.error('👉 Por favor, corre primero: npm run seed:users');
       process.exit(1);
     }
 
+    // Usamos al primer jugador de la lista como el creador de los partidos
+    const usuarioCreador = todosLosUsuarios[0];
     const partidosFake = [];
 
-    // 4. Generar los 10 partidos dinámicamente
+    // 3. Generar los 10 partidos base
     for (let i = 0; i < 10; i++) {
-      // Generamos fechas escalonadas (hoy, mañana, pasado...)
       const fechaPartido = new Date();
       fechaPartido.setDate(fechaPartido.getDate() + (i % 4)); 
 
@@ -52,14 +54,34 @@ const sembrarPartidos = async () => {
         lugar: complejos[i],
         tipoCancha: tiposCancha[i],
         creador: usuarioCreador._id,
-        jugadores: [], // Arrancan vacíos para que pruebes el botón de unión
+        jugadores: [],
+        suplentes: [],
         estado: 'abierto'
       });
     }
 
-    // 5. Impactar en Atlas
-    await Match.insertMany(partidosFake);
-    console.log('🚀 ¡Se sembraron 10 partidos con éxito en tu base de datos!');
+    // 4. Guardar los partidos en la base de datos
+    const partidosCreados = await Match.insertMany(partidosFake);
+    console.log('🚀 Se crearon los 10 partidos vacíos.');
+
+    // 5. 🔥 LA MAGIA: Agarrar el PRIMER partido (Fútbol 5 -> cupo 10) y llenarlo
+    const primerPartido = await Match.findById(partidosCreados[0]._id);
+    
+    console.log(`⏳ Simulando inscripción automática de 15 jugadores en: ${primerPartido.lugar}...`);
+    
+    // Recorremos los 15 usuarios generados y los anotamos usando el método del modelo
+    for (const usuario of todosLosUsuarios) {
+      // LLamamos al método de instancia que programamos en el Modelo Match
+      primerPartido.anotarJugador(usuario._id);
+    }
+
+    // Guardamos el partido con las listas de titulares y suplentes ya procesadas por el flujo FIFO
+    await primerPartido.save();
+
+    console.log('✅ ¡Partido estrella configurado con éxito!');
+    console.log(`   • Titulares anotados: ${primerPartido.jugadores.length}/${primerPartido.cupoMaximo}`);
+    console.log(`   • Suplentes en cola de espera (FIFO): ${primerPartido.suplentes.length}`);
+    console.log(`   • Estado del partido: '${primerPartido.estado}'`);
     
     process.exit(0);
   } catch (error) {

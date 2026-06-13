@@ -18,15 +18,17 @@ class MatchService {
   }
 
   // US04 y US05: Traer la cartelera de partidos activos con sus jugadores vinculados
+  // 💡 Modificado: Ahora populamos suplentes también por si queremos mostrar contadores en la Home
   async obtenerPartidosActivos() {
     return await Match.find({ estado: { $ne: 'cancelado' } })
-      .populate('creador', 'email')
-      .populate('jugadores', 'email posicion nivel')
+      .populate('creador', 'nombre apellido email') // Si querés usar el nombre del creador
+      .populate('jugadores', 'nombre apellido email posicion rango honor') // 👈 SUMAMOS NOMBRE Y APELLIDO
+      .populate('suplentes', 'nombre apellido email posicion rango honor')
       .sort({ fecha: 1, hora: 1 })
-      .lean(); // Convierte a objetos JS planos para Handlebars
+      .lean();
   }
 
-  // US06: Lógica de inscripción del jugador (Botón de unión)
+  // US06 & US15: Lógica de inscripción del jugador (Titular o Suplente automático)
   async inscribirJugador(partidoId, jugadorId) {
     const partido = await Match.findById(partidoId);
     
@@ -38,60 +40,40 @@ class MatchService {
       throw new Error('No podés anotarte a un partido cancelado.');
     }
 
-    // Verificar si ya está anotado
-    const yaAnotado = partido.jugadores.some(id => id.toString() === jugadorId.toString());
-    if (yaAnotado) {
-      throw new Error('Ya estás anotado en este partido.');
-    }
+    // ⚡ Delegamos la lógica FIFO, validaciones e inserción al método del modelo
+    const resultado = partido.anotarJugador(jugadorId);
 
-    // Verificar si hay cupo libre
-    if (partido.jugadores.length >= partido.cupoMaximo) {
-      throw new Error('El partido ya está completo.');
-    }
-
-    // Insertar el jugador al array
-    partido.jugadores.push(jugadorId);
-
-    // Si se llegó al límite, cambiar estado a completo
-    if (partido.jugadores.length === partido.cupoMaximo) {
-      partido.estado = 'completo';
-    }
-
-    return await partido.save();
+    await partido.save();
+    
+    // Retornamos el resultado por si el controlador quiere mandar un mensaje personalizado
+    // Ej: "Te anotaste como titular" o "Entraste a la cola de espera como suplente"
+    return { partido, ...resultado };
   }
 
-    // Para el contrabotón de unión: Darse de baja
-    async darDeBajaJugador(partidoId, jugadorId) {
+  // US06 & US07: Darse de baja (Con traspaso automático FIFO de suplente a titular)
+  async darDeBajaJugador(partidoId, jugadorId) {
     const partido = await Match.findById(partidoId);
     
     if (!partido) {
-        throw new Error('El partido no existe.');
+      throw new Error('El partido no existe.');
     }
 
-    // Filtrar el array para sacar al jugador
-    const longitudOriginal = partido.jugadores.length;
-    partido.jugadores = partido.jugadores.filter(id => id.toString() !== jugadorId.toString());
+    // ⚡ Toda la complejidad de sacar al jugador y ascender al suplente ocurre acá adentro
+    const resultado = partido.darDeBajaJugador(jugadorId);
 
-    if (partido.jugadores.length === longitudOriginal) {
-        throw new Error('No estás anotado en este partido.');
-    }
+    await partido.save();
+    
+    return { partido, ...resultado };
+  }
 
-    // Si el partido estaba completo y ahora se liberó un cupo, vuelve a estar abierto
-    if (partido.estado === 'completo' && partido.jugadores.length < partido.cupoMaximo) {
-        partido.estado = 'abierto';
-    }
-
-    return await partido.save();
-    }
-
-    // Auxiliar para traer un solo partido detallado con sus jugadores populados
-    async obtenerPartidoPorId(id) {
+  // Auxiliar para traer un solo partido detallado con sus jugadores y suplentes populados
+  async obtenerPartidoPorId(id) {
     return await Match.findById(id)
-        .populate('creador', 'email')
-        .populate('jugadores', 'email posicion nivel')
-        .lean();
-    }
-
+      .populate('creador', 'nombre apellido email')
+      .populate('jugadores', 'nombre apellido email posicion rango honor') // 👈 SUMAMOS NOMBRE Y APELLIDO
+      .populate('suplentes', 'nombre apellido email posicion rango honor') // 👈 SUMAMOS NOMBRE Y APELLIDO
+      .lean();
+  }
 }
 
 export default new MatchService();

@@ -3,33 +3,38 @@ import matchService from '../../services/matchService.js';
 // US04 y US05: Renderizar el Dashboard con la cartelera de partidos
 export const mostrarDashboard = async (req, res) => {
   try {
-    // 1. Traemos todos los partidos activos usando el servicio
     const partidos = await matchService.obtenerPartidosActivos();
-    
-    // ID del usuario logueado (si es que hay uno, gracias al middleware global)
     const usuarioLogueadoId = res.locals.user ? res.locals.user._id.toString() : null;
 
-    // 2. Formateamos los partidos para facilitarle la vida a Handlebars
     const partidosFormateados = partidos.map(partido => {
       const cuposLibres = partido.cupoMaximo - partido.jugadores.length;
       
+      const esTitular = partido.jugadores?.some(j => j?._id?.toString() === usuarioLogueadoId) || false;
+      const esSuplente = partido.suplentes?.some(s => s?._id?.toString() === usuarioLogueadoId) || false;
+
+      // 💡 CÁLCULO DE SUPLENTES Y CONTADORES
+      const limiteSuplentes = partido.tipoCancha;
+      const cantidadSuplentes = partido.suplentes?.length || 0;
+      const listaEsperaLlena = cantidadSuplentes >= limiteSuplentes;
+      const contadorSuplentes = `${cantidadSuplentes}/${limiteSuplentes}`;
+
       return {
         ...partido,
-        // Formateamos la fecha a algo amigable (DD/MM/YYYY) sin romper el lean object
         fechaFormateada: new Date(partido.fecha).toLocaleDateString('es-AR', { timeZone: 'UTC' }),
         cuposLibres,
         estaCompleto: partido.estado === 'completo' || cuposLibres <= 0,
-        // US06: Banderas lógicas para controlar qué botón mostrar en el HTML
-        yaInscripto: partido.jugadores.some(j => j._id.toString() === usuarioLogueadoId),
-        esCreador: partido.creador._id.toString() === usuarioLogueadoId
+        listaEsperaLlena,
+        contadorSuplentes, // 👈 Pasamos el "X/Y" para el badge de la Home
+        yaInscripto: esTitular || esSuplente,
+        esSuplente,
+        esCreador: partido.creador?._id?.toString() === usuarioLogueadoId
       };
     });
 
-    // 3. Renderizamos la Home pasándole los partidos y mensajes si existieran en la sesión
     res.render('web/home', {
       partidos: partidosFormateados,
-      error: req.query.error, // Para atrapar errores que viajen por la URL
-      exito: req.query.exito   // Para atrapar mensajes de éxito
+      error: req.query.error,
+      exito: req.query.exito
     });
 
   } catch (error) {
@@ -39,31 +44,31 @@ export const mostrarDashboard = async (req, res) => {
   }
 };
 
-// US06: Procesar la acción del botón de unión
+// US06 & US15: Procesar la acción de unirse (Titular o Suplente automático)
 export const unirseAPartido = async (req, res) => {
   try {
     const { id: partidoId } = req.params;
     
-    // Doble check de seguridad: si no hay usuario en res.locals, no lo dejamos pasar
     if (!res.locals.isAuthenticated) {
       return res.redirect('/web/login?error=Debés iniciar sesión para anotarte a un partido.');
     }
 
     const usuarioId = res.locals.user._id;
 
-    // Ejecutamos la lógica del servicio
-    await matchService.inscribirJugador(partidoId, usuarioId);
+    const { tipo } = await matchService.inscribirJugador(partidoId, usuarioId);
 
-    // Si todo sale bien, volvemos a la home avisando el éxito
-    res.redirect('/?exito=¡Te anotaste al partido con éxito! Prepará los botines.');
+    const mensaje = tipo === 'titular' 
+      ? '¡Te anotaste al partido con éxito! Prepará los botines.' 
+      : 'El partido estaba completo, pero entraste en la lista de espera como suplente. ⏳';
+
+    res.redirect(`/?exito=${encodeURIComponent(mensaje)}`);
 
   } catch (error) {
-    // Si el servicio tira un error (ej: "Ya estás anotado" o "Está completo"), lo mandamos por la URL
     res.redirect(`/?error=${encodeURIComponent(error.message)}`);
   }
 };
 
-// Mostrar el detalle de un partido específico con su lista de jugadores
+// Mostrar el detalle de un partido específico con su lista de jugadores y suplentes
 export const mostrarDetallePartido = async (req, res) => {
   try {
     const partido = await matchService.obtenerPartidoPorId(req.params.id);
@@ -74,13 +79,26 @@ export const mostrarDetallePartido = async (req, res) => {
     const usuarioLogueadoId = res.locals.user ? res.locals.user._id.toString() : null;
     const cuposLibres = partido.cupoMaximo - partido.jugadores.length;
 
+    // ⚡ Corregido: Agregado ?. para que no tire error si el array o el id vienen vacíos
+    const esTitular = partido.jugadores?.some(j => j?._id?.toString() === usuarioLogueadoId) || false;
+    const esSuplente = partido.suplentes?.some(s => s?._id?.toString() === usuarioLogueadoId) || false;
+
+    // 💡 CÁLCULO DE SUPLENTES Y CONTADORES EN DETALLE
+    const limiteSuplentes = partido.tipoCancha;
+    const cantidadSuplentes = partido.suplentes?.length || 0;
+    const listaEsperaLlena = cantidadSuplentes >= limiteSuplentes;
+    const contadorSuplentes = `${cantidadSuplentes}/${limiteSuplentes}`;
+
     const partidoFormateado = {
       ...partido,
       fechaFormateada: new Date(partido.fecha).toLocaleDateString('es-AR', { timeZone: 'UTC' }),
       cuposLibres,
       estaCompleto: partido.estado === 'completo' || cuposLibres <= 0,
-      yaInscripto: partido.jugadores.some(j => j._id.toString() === usuarioLogueadoId),
-      esCreador: partido.creador._id.toString() === usuarioLogueadoId
+      listaEsperaLlena,
+      contadorSuplentes, // 👈 Pasamos el contador también al detalle por si lo querés usar
+      yaInscripto: esTitular || esSuplente,
+      esSuplente,
+      esCreador: partido.creador?._id?.toString() === usuarioLogueadoId
     };
 
     res.render('web/partidoDetalle', { partido: partidoFormateado });
@@ -89,15 +107,16 @@ export const mostrarDetallePartido = async (req, res) => {
   }
 };
 
-// Procesar la acción de bajarse del partido
+// Procesar la acción de bajarse del partido (Con lógica FIFO automática)
 export const bajarseDePartido = async (req, res) => {
   try {
     const { id: partidoId } = req.params;
     const usuarioId = res.locals.user._id;
 
-    await matchService.darDeBajaJugador(partidoId, usuarioId);
+    // El servicio procesa la baja y nos devuelve qué pasó con la cola de espera
+    const { mensaje } = await matchService.darDeBajaJugador(partidoId, usuarioId);
 
-    res.redirect(`/?exito=Te bajaste del partido correctamente.`);
+    res.redirect(`/?exito=${encodeURIComponent(mensaje)}`);
   } catch (error) {
     res.redirect(`/?error=${encodeURIComponent(error.message)}`);
   }

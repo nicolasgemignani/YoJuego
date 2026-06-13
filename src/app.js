@@ -31,6 +31,11 @@ app.use(cargarUsuarioGlobal);
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 
+// REGISTRA EL HELPER EN HBS
+hbs.registerHelper('logicaSumaUno', (index) => {
+  return index + 1;
+});
+
 // Definir el layout por defecto de forma global
 app.set('view options', { layout: 'layouts/main' });
 hbs.registerPartials(path.join(__dirname, 'views', 'partials'));

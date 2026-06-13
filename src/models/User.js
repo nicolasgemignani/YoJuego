@@ -9,6 +9,16 @@ const UserSchema = new mongoose.Schema({
     trim: true,
     lowercase: true
   },
+  nombre: {
+    type: String,
+    required: [true, 'El nombre es obligatorio.'],
+    trim: true // Borra espacios vacíos locos al principio o final
+  },
+  apellido: {
+    type: String,
+    required: [true, 'El apellido es obligatorio.'],
+    trim: true
+  },
   password: {
     type: String,
     required: [true, 'La contraseña es obligatoria.']
@@ -26,12 +36,17 @@ const UserSchema = new mongoose.Schema({
   },
   honor: {
     type: Number,
-    default: 0
+    default: 50
   },
   rango: {
     type: String,
     enum: ['Bronce', 'Plata', 'Oro'],
     default: 'Bronce'
+  },
+  medallas: {
+    crack: { type: Number, default: 0 },
+    poneHuevo: { type: Number, default: 0 },
+    amistoso: { type: Number, default: 0 }
   }
 }, { 
   timestamps: true // Nos crea automáticamente createdAt y updatedAt en Mongo
@@ -60,9 +75,22 @@ class UserClass {
 
   // Lógica de negocio intrínseca: subir de rango según el honor acumulado
   actualizarRango() {
-    if (this.honor >= 100) this.rango = 'Oro';
-    else if (this.honor >= 50) this.rango = 'Plata';
-    else this.rango = 'Bronce';
+    if (this.honor >= 150) this.rango = 'Oro';      // Subir a Oro requiere esfuerzo
+    else if (this.honor >= 80) this.rango = 'Plata'; // Plata es alcanzable con un par de partidos frentes
+    else this.rango = 'Bronce';                      // Si caen abajo de 80 (o arrancan en 50), son Bronce
+  }
+
+  recibirMedalla(tipoMedalla) {
+    // 1. Sumamos al contador específico según el tipo que venga
+    if (tipoMedalla === 'crack') this.medallas.crack += 1;
+    if (tipoMedalla === 'poneHuevo') this.medallas.poneHuevo += 1;
+    if (tipoMedalla === 'amistoso') this.medallas.amistoso += 1;
+
+    // 2. Cada medalla que te dan los pibes te suma, por ejemplo, 10 puntos de Honor
+    this.honor += 10;
+
+    // 3. Evaluamos automáticamente si con este nuevo honor el jugador sube de rango (Bronce -> Plata -> Oro)
+    this.actualizarRango();
   }
 
 

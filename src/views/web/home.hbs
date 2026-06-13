@@ -20,11 +20,15 @@
   <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
     {{#each partidos}}
       <div class="col">
-        <div class="card h-100 shadow-sm border-{{#if this.estaCompleto}}secondary{{else}}success{{/if}}">
+        <div class="card h-100 shadow-sm border-{{#if this.estaCompleto}}warning{{else}}success{{/if}}">
           <div class="card-header d-flex justify-content-between align-items-center bg-transparent border-0 pt-3">
             <span class="badge bg-secondary">Fútbol {{this.tipoCancha}}</span>
             {{#if this.estaCompleto}}
-              <span class="badge bg-danger">Completo</span>
+              {{#if this.listaEsperaLlena}}
+                <span class="badge bg-danger">Completo Total</span>
+              {{else}}
+                <span class="badge bg-warning text-dark">Lista de Espera ({{this.contadorSuplentes}})</span>
+              {{/if}}
             {{else}}
               <span class="badge bg-success">Quedan {{this.cuposLibres}} lugares</span>
             {{/if}}
@@ -42,11 +46,19 @@
             {{#if ../isAuthenticated}}
               {{#if this.yaInscripto}}
                 <form action="/partidos/{{this._id}}/bajarse" method="POST">
-                  <button type="submit" class="btn btn-danger w-100 shadow-sm">❌ Salir del Partido</button>
+                  <button type="submit" class="btn btn-danger w-100 shadow-sm">
+                    {{#if this.esSuplente}}❌ Salir de Lista de Espera{{else}}❌ Salir del Partido{{/if}}
+                  </button>
                 </form>
               {{else}}
                 {{#if this.estaCompleto}}
-                  <button class="btn btn-outline-secondary w-100" disabled>❌ Cupos llenos</button>
+                  {{#if this.listaEsperaLlena}}
+                    <button class="btn btn-outline-secondary w-100" disabled>❌ Partido y Lista Llenos</button>
+                  {{else}}
+                    <form action="/partidos/{{this._id}}/unirse" method="POST">
+                      <button type="submit" class="btn btn-warning w-100 shadow-sm text-dark">⏳ Anotarse como Suplente</button>
+                    </form>
+                  {{/if}}
                 {{else}}
                   <form action="/partidos/{{this._id}}/unirse" method="POST">
                     <button type="submit" class="btn btn-success w-100 shadow-sm">⚡ Unirme</button>
@@ -54,7 +66,15 @@
                 {{/if}}
               {{/if}}
             {{else}}
-              <a href="/web/login" class="btn btn-outline-success w-100">Iniciá sesión para unirte</a>
+              {{#if this.estaCompleto}}
+                {{#if this.listaEsperaLlena}}
+                  <a href="/web/login" class="btn btn-outline-secondary w-100">Lleno • Iniciá sesión para ver</a>
+                {{else}}
+                  <a href="/web/login" class="btn btn-outline-warning text-dark w-100">Iniciá sesión para ser suplente</a>
+                {{/if}}
+              {{else}}
+                <a href="/web/login" class="btn btn-outline-success w-100">Iniciá sesión para unirte</a>
+              {{/if}}
             {{/if}}
           </div>
         </div>
