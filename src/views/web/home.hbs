@@ -5,15 +5,17 @@
     <p class="lead text-muted">Anotate en los partidos disponibles del día o armá el tuyo.</p>
   </div>
 
-  {{#if exito}}
+  {{#if success}}
     <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-      <strong>⚽ ¡Todo listo!</strong> {{exito}}
+      <strong>⚽ ¡Todo listo!</strong> {{success}}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   {{/if}}
 
   {{#if error}}
     <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
       <strong>⚠️ Atención:</strong> {{error}}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   {{/if}}
 
@@ -22,7 +24,7 @@
       <div class="col">
         <div class="card h-100 shadow-sm border-{{#if this.estaCompleto}}warning{{else}}success{{/if}}">
           <div class="card-header d-flex justify-content-between align-items-center bg-transparent border-0 pt-3">
-            <span class="badge bg-secondary">Fútbol {{this.tipoCancha}}</span>
+            <span class="badge bg-secondary">Fútbol {{this.tipoCaches}}</span>
             {{#if this.estaCompleto}}
               {{#if this.listaEsperaLlena}}
                 <span class="badge bg-danger">Completo Total</span>
@@ -45,18 +47,14 @@
           <div class="card-footer bg-transparent border-0 pb-3">
             {{#if ../isAuthenticated}}
               
-              {{#if this.puedeValorar}}
-                <a href="/web/votos/{{this._id}}/votar" class="btn btn-primary fw-bold w-100 shadow-sm">
-                  ⭐ Valorar Jugadores
-                </a>
+              {{#if this.yaInscripto}}
+                <form action="/partidos/{{this._id}}/bajarse" method="POST">
+                  <button type="submit" class="btn btn-danger w-100 shadow-sm">
+                    {{#if this.esSuplente}}❌ Salir de Lista de Espera{{else}}❌ Salir del Partido{{/if}}
+                  </button>
+                </form>
               {{else}}
-                {{#if this.yaInscripto}}
-                  <form action="/partidos/{{this._id}}/bajarse" method="POST">
-                    <button type="submit" class="btn btn-danger w-100 shadow-sm">
-                      {{#if this.esSuplente}}❌ Salir de Lista de Espera{{else}}❌ Salir del Partido{{/if}}
-                    </button>
-                  </form>
-                {{else}}
+                {{#if this.puedeAnotarse}}
                   {{#if this.estaCompleto}}
                     {{#if this.listaEsperaLlena}}
                       <button class="btn btn-outline-secondary w-100" disabled>❌ Partido y Lista Llenos</button>
@@ -70,8 +68,13 @@
                       <button type="submit" class="btn btn-success w-100 shadow-sm">⚡ Unirme</button>
                     </form>
                   {{/if}}
-                {{/if}}
-              {{/if}}
+                {{else}}
+                  {{#if this.pertenecioAlPartido}}
+                    <button class="btn btn-success w-100" disabled>✓ Jugaste este partido</button>
+                  {{else}}
+                    <button class="btn btn-secondary w-100" disabled>⏰ Partido finalizado</button>
+                  {{/if}}
+                {{/if}} {{/if}}
 
             {{else}}
               {{#if this.estaCompleto}}
@@ -84,9 +87,8 @@
                 <a href="/web/login" class="btn btn-outline-success w-100">Iniciá sesión para unirte</a>
               {{/if}}
             {{/if}}
-          </div>
-        </div>
-      </div>
+          </div> 
+        </div> </div> 
     {{else}}
       <div class="col-12 text-center my-5">
         <div class="alert alert-light p-5 border rounded-3 shadow-sm">

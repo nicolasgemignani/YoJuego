@@ -74,4 +74,21 @@
   </div>
 </div>
 
+<div class="modal fade" id="modalConfirmarSalto" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-danger text-white text-center d-block">
+        <h5 class="modal-title fw-bold">⚠️ ¿Estás seguro?</h5>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <p class="mb-0 text-muted">Si saltás la votación de este partido, se aplicará una penalización directa en tu nivel de Honor.</p>
+      </div>
+      <div class="modal-footer border-0 d-flex justify-content-center gap-2 pt-0">
+        <button type="button" class="btn btn-light px-3" data-bs-dismiss="modal">Volver</button>
+        <button type="button" id="btnConfirmarSaltoFinal" class="btn btn-danger px-3 fw-bold">Saltar de todas formas</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="/js/votar.js"></script>

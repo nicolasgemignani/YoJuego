@@ -16,12 +16,12 @@ export const mostrarDashboard = async (req, res) => {
       const momentoPartido = new Date(`${fechaString}T${partido.hora}:00`);
       const momentoFinalizacion = new Date(momentoPartido.getTime() + 90 * 60 * 1000);
 
-      // 2. ¿Ya pasó el tiempo del partido?
+      // 2. ¿Ya pasó el tiempo o ya empezó?
       const yaTermino = ahora > momentoFinalizacion;
+      const yaEmpezo = ahora > momentoPartido; // 💡 Candado clave para que no se anoten si ya arrancó o pasó
 
       // 3. Lógica de cupos e inscripción original tuya
       const cuposLibres = partido.cupoMaximo - partido.jugadores.length;
-      
       const esTitular = partido.jugadores?.some(j => j?._id?.toString() === usuarioLogueadoId) || false;
       const esSuplente = partido.suplentes?.some(s => s?._id?.toString() === usuarioLogueadoId) || false;
 
@@ -29,6 +29,15 @@ export const mostrarDashboard = async (req, res) => {
       const cantidadSuplentes = partido.suplentes?.length || 0;
       const listaEsperaLlena = cantidadSuplentes >= limiteSuplentes;
       const contadorSuplentes = `${cantidadSuplentes}/${limiteSuplentes}`;
+
+      // 💡 FILTRO: El usuario perteneció al partido (histórico)
+      const pertenecioAlPartido = esTitular || esSuplente;
+
+      // 🔒 MODIFICACIÓN: "yaInscripto" activo para interactuar solo si NO empezó el partido
+      const yaInscripto = !yaEmpezo && pertenecioAlPartido;
+
+      // 🛡️ CONTROL DE ACCIÓN: Solo se puede anotar si NO empezó, NO está inscripto y hay lugar
+      const puedeAnotarse = !yaEmpezo && !pertenecioAlPartido && (cuposLibres > 0 || !listaEsperaLlena);
 
       // 💡 LÓGICA DE VOTACIÓN: Terminó, jugó de titular Y el servicio nos dice que NO VOTÓ todavía
       const puedeValorar = yaTermino && esTitular && !partido.yaVoto;
@@ -41,16 +50,46 @@ export const mostrarDashboard = async (req, res) => {
         listaEsperaLlena,
         contadorSuplentes,
         puedeValorar, 
-        yaInscripto: !yaTermino && (esTitular || esSuplente),
+        puedeAnotarse, // 👈 Se lo mandamos a tu .hbs para renderizar condicionalmente el botón
+        yaInscripto,   // 👈 Ahora es un booleano limpio (true/false)
+        pertenecioAlPartido,
         esSuplente,
         esCreador: partido.creador?._id?.toString() === usuarioLogueadoId
       };
     });
 
+    // 🔄 Separamos los partidos en dos grupos usando la bandera "yaTermino"
+    const partidosFuturos = partidosFormateados.filter(p => !p.yaTermino);
+    const partidosPasados = partidosFormateados.filter(p => p.yaTermino);
+
+    // 📅 1. Ordenar partidos FUTUROS: Cronológico Ascendente (El más cercano primero)
+    partidosFuturos.sort((a, b) => {
+      const deA = new Date(`${new Date(a.fecha).toISOString().split('T')[0]}T${a.hora}:00`);
+      const deB = new Date(`${new Date(b.fecha).toISOString().split('T')[0]}T${b.hora}:00`);
+      return deA - deB; // Ascendente
+    });
+
+    // 📜 2. Ordenar partidos PASADOS (Historial): Cronológico Descendente (El más reciente primero)
+    partidosPasados.sort((a, b) => {
+      const deA = new Date(`${new Date(a.fecha).toISOString().split('T')[0]}T${a.hora}:00`);
+      const deB = new Date(`${new Date(b.fecha).toISOString().split('T')[0]}T${b.hora}:00`);
+      return deB - deA; // Descendente
+    });
+
+    // 🚀 Juntamos los dos arrays: Primero la cartelera activa ordenada, abajo el historial ordenado
+    const carteleraFinal = [...partidosFuturos, ...partidosPasados];
+
+    // 💡 SOLUCIÓN DEFINITIVA: Atajamos "exito" (como viene en tu URL) y también "success" por las dudas
+    const successMsg = req.query.exito || req.query.success || null;
+    const errorMsg = req.query.error || null;
+
+    // 3. Renderizamos la vista con el array perfectamente acomodado
     res.render('web/home', {
-      partidos: partidosFormateados,
-      error: req.query.error,
-      exito: req.query.exito || req.query.success
+      partidos: carteleraFinal, // 👈 Lista cocinada, priorizada y limpia
+      isAuthenticated: req.isAuthenticated(),
+      user: res.locals.user,
+      success: successMsg,  // 👈 Clave para tu {{#if success}} de la vista
+      error: errorMsg       // 👈 Clave para tu {{#if error}} de la vista
     });
 
   } catch (error) {

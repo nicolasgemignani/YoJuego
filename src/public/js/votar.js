@@ -150,11 +150,29 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 5. Clic en Saltar Votación
+  // Inicializar el nuevo Modal Estético de Confirmación
+  const modalSaltoElement = document.getElementById('modalConfirmarSalto');
+  const modalConfirmarSalto = new bootstrap.Modal(modalSaltoElement);
+
+  // 5. Clic en Saltar Votación (Abre el modal estético)
   document.getElementById('btnSaltar').addEventListener('click', () => {
-    if (confirm('¿Estás seguro de que querés saltar la votación? Tu honor bajará 2 puntos.')) {
-      document.getElementById('inputVotos').value = JSON.stringify([]);
-      document.getElementById('inputSalto').value = "true";
-      document.getElementById('formVotacion').submit();
-    }
+    // Le quitamos el foco al botón para mantener la consola limpia
+    if (document.activeElement) document.activeElement.blur();
+    
+    // Mostramos el cartel hermoso de Bootstrap
+    modalConfirmarSalto.show();
+  });
+
+  // Escuchamos el click adentro del botón de confirmación final del modal
+  document.getElementById('btnConfirmarSaltoFinal').addEventListener('click', () => {
+    // Cerramos el foco
+    if (document.activeElement) document.activeElement.blur();
+
+    // Cargamos los datos ocultos y mandamos el formulario a la guerra
+    document.getElementById('inputVotos').value = JSON.stringify([]);
+    document.getElementById('inputSalto').value = "true";
+    
+    modalConfirmarSalto.hide();
+    document.getElementById('formVotacion').submit();
   });
 });

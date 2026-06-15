@@ -14,11 +14,11 @@ const VoteSchema = new mongoose.Schema({
   receptorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: function() { return this.tipoMedalla !== 'salto'; } // En caso de voto de salto, el receptorId no es necesario
   },
   tipoMedalla: {
     type: String,
-    enum: ['jugadorPartido', 'actitudEsfuerzo', 'buenCompanero'],
+    enum: ['jugadorPartido', 'actitudEsfuerzo', 'buenCompanero', 'salto'], // 'salto' es un tipo especial para votos de salto
     required: true
   }
 }, { 

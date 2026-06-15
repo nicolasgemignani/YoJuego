@@ -16,9 +16,17 @@ class VoteService {
       const usuario = await User.findById(votanteId);
       if (!usuario) throw new Error('Usuario votante no encontrado.');
       
-      usuario.penalizarPorNoVotar(); // Llama a tu método: honor -= 2
+      usuario.penalizarPorNoVotar(); // Llama a tu método: honor -= 2 (secreto)
       await usuario.save();
-      return { msg: 'Votación saltada. Penalización aplicada al Honor.' };
+
+      // 💡 Guardamos el testigo limpio. Al ser tipoMedalla: 'salto', receptorId ya no es requerido
+      await Vote.create({
+        partidoId,
+        votanteId,
+        tipoMedalla: 'salto'
+      });
+
+      return { msg: 'Votación procesada correctamente.' }; 
     }
 
     // CASO B: El usuario envió sus valoraciones (Máximo 2 votos)
