@@ -1,0 +1,77 @@
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-md-10 text-center">
+      
+      <h2 class="fw-bold mb-2 text-uppercase">🎮 Valoración del Partido</h2>
+      <p class="text-muted mb-4">Elegí un máximo de 2 medallas para destacar a tus compañeros. ¡Sé justo!</p>
+
+      {{#if error}}
+        <div class="alert alert-danger mb-4" role="alert">❌ {{error}}</div>
+      {{/if}}
+
+      <div class="alert alert-warning d-flex align-items-center justify-content-center gap-2 mb-5 shadow-sm" role="alert">
+        <span>⚠️ Recordá que si saltás la votación sin elegir a nadie, tu <strong>Honor bajará 2 puntos</strong>.</span>
+      </div>
+
+      <div class="row g-4 justify-content-center mb-5">
+        {{#each jugadores}}
+          <div class="col-6 col-sm-4 col-md-3">
+            <div class="fifa-card rango-{{lowercase this.rango}}" data-id="{{this._id}}" data-nombre="{{this.nombre}}">
+              <div class="card-badge">{{this.posicion}}</div>
+              <div class="card-initials">{{iniciales this.nombre this.apellido}}</div>
+              <div class="card-name">{{this.nombre}}</div>
+              <div class="card-lastname">{{this.apellido}}</div>
+              <div class="card-rango-tag">{{this.rango}}</div>
+              
+              <div class="selected-check">✓</div>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+
+      <div class="d-flex flex-column flex-sm-row justify-content-center gap-3">
+        <button id="btnEnviar" class="btn btn-success btn-lg px-5 fw-bold shadow" disabled>
+          Enviar Valoraciones (<span id="countVotos">0</span>/2)
+        </button>
+        <button id="btnSaltar" class="btn btn-outline-danger btn-lg px-4">
+          Saltar Votación (-2 Honor)
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<form id="formVotacion" action="/web/votos/guardar" method="POST" style="display: none;">
+  <input type="hidden" name="partidoId" value="{{partidoId}}">
+  <input type="hidden" name="salto" id="inputSalto" value="false">
+  <input type="hidden" name="votos" id="inputVotos">
+</form>
+
+<div class="modal fade" id="modalMedalla" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-dark text-white text-center d-block">
+        <h5 class="modal-title fw-bold">Asignar Medalla</h5>
+        <small id="modalJugadorNombre" class="text-muted"></small>
+      </div>
+      <div class="modal-body p-3">
+        <div class="d-grid gap-2">
+          <button class="btn btn-outline-primary text-start btn-medalla" data-tipo="jugadorPartido">
+            🏅 Jugador del Partido
+          </button>
+          <button class="btn btn-outline-warning text-start btn-medalla" data-tipo="actitudEsfuerzo">
+            💪 Actitud / Esfuerzo
+          </button>
+          <button class="btn btn-outline-success text-start btn-medalla" data-tipo="buenCompanero">
+            🤝 Buen Compañero
+          </button>
+          <hr class="my-2">
+          <button id="btnQuitarVoto" class="btn btn-link text-danger btn-sm text-decoration-none">❌ Quitar medalla</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/votar.js"></script>

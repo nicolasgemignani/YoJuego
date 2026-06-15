@@ -12,7 +12,7 @@ const UserSchema = new mongoose.Schema({
   nombre: {
     type: String,
     required: [true, 'El nombre es obligatorio.'],
-    trim: true // Borra espacios vacíos locos al principio o final
+    trim: true
   },
   apellido: {
     type: String,
@@ -28,28 +28,31 @@ const UserSchema = new mongoose.Schema({
     enum: ['Arquero', 'Defensor', 'Mediocampista', 'Delantero', 'No definido'],
     default: 'No definido'
   },
-  nivel: {
+  // 💡 NUEVO: Puntos internos para calcular el rango de habilidad
+  rangoPuntos: {
     type: Number,
-    default: 5,
-    min: 1,
-    max: 10
-  },
-  honor: {
-    type: Number,
-    default: 50
+    default: 0,
+    min: 0
   },
   rango: {
     type: String,
     enum: ['Bronce', 'Plata', 'Oro'],
     default: 'Bronce'
   },
+  // 💡 NUEVO: El honor mide únicamente la conducta y reputación humana
+  honor: {
+    type: Number,
+    default: 50,
+    min: 0 // Para que las penalizaciones por no votar no lo dejen en negativo
+  },
+  // 💡 NUEVO: Medallas rebautizadas con los nombres reales del fútbol
   medallas: {
-    crack: { type: Number, default: 0 },
-    poneHuevo: { type: Number, default: 0 },
-    amistoso: { type: Number, default: 0 }
+    jugadorPartido: { type: Number, default: 0 },
+    actitudEsfuerzo: { type: Number, default: 0 },
+    buenCompanero: { type: Number, default: 0 }
   }
 }, { 
-  timestamps: true // Nos crea automáticamente createdAt y updatedAt en Mongo
+  timestamps: true 
 });
 
 // =========================================================================
@@ -57,13 +60,11 @@ const UserSchema = new mongoose.Schema({
 // =========================================================================
 
 class UserClass {
-  // --- Métodos de Instancia (Operan sobre un usuario específico) ---
+  // --- Métodos de Instancia ---
 
   // Encriptar la contraseña antes de guardarla
   async encriptarPassword() {
-    // Si la contraseña no se modificó (por ejemplo, el usuario solo cambió su posición), no la volvemos a encriptar
     if (!this.isModified('password')) return;
-    
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
   }
@@ -73,40 +74,49 @@ class UserClass {
     return await bcrypt.compare(passwordCandidata, this.password);
   }
 
-  // Lógica de negocio intrínseca: subir de rango según el honor acumulado
+  // 💡 ACTUALIZADO: El rango ahora se evalúa según los "rangoPuntos", no por el honor
   actualizarRango() {
-    if (this.honor >= 150) this.rango = 'Oro';      // Subir a Oro requiere esfuerzo
-    else if (this.honor >= 80) this.rango = 'Plata'; // Plata es alcanzable con un par de partidos frentes
-    else this.rango = 'Bronce';                      // Si caen abajo de 80 (o arrancan en 50), son Bronce
+    if (this.rangoPuntos >= 300) this.rango = 'Oro';
+    else if (this.rangoPuntos >= 100) this.rango = 'Plata';
+    else this.rango = 'Bronce';
   }
 
+  // 💡 ACTUALIZADO: Lógica de medallas según el nuevo sistema de 2 ejes
   recibirMedalla(tipoMedalla) {
-    // 1. Sumamos al contador específico según el tipo que venga
-    if (tipoMedalla === 'crack') this.medallas.crack += 1;
-    if (tipoMedalla === 'poneHuevo') this.medallas.poneHuevo += 1;
-    if (tipoMedalla === 'amistoso') this.medallas.amistoso += 1;
+    if (tipoMedalla === 'jugadorPartido') {
+      this.medallas.jugadorPartido += 1;
+      this.rangoPuntos += 10; // 🔥 Suma directo al Rango Competitivo
+    }
+    
+    if (tipoMedalla === 'actitudEsfuerzo') {
+      this.medallas.actitudEsfuerzo += 1;
+      this.rangoPuntos += 5;  // 💪 Suma directo al Rango Competitivo
+    }
+    
+    if (tipoMedalla === 'buenCompanero') {
+      this.medallas.buenCompanero += 1;
+      this.honor += 5;        // 🤝 Suma únicamente al Honor Social
+    }
 
-    // 2. Cada medalla que te dan los pibes te suma, por ejemplo, 10 puntos de Honor
-    this.honor += 10;
-
-    // 3. Evaluamos automáticamente si con este nuevo honor el jugador sube de rango (Bronce -> Plata -> Oro)
+    // Evaluamos automáticamente si sube de Rango (Bronce -> Plata -> Oro)
     this.actualizarRango();
   }
 
+  // 💡 NUEVO: Método para aplicar la penalización si el pibe skipea la votación
+  penalizarPorNoVotar() {
+    this.honor = Math.max(0, this.honor - 2); // Le resta 2 puntos cuidando el mínimo de 0
+  }
 
-  // --- Métodos Estáticos / De Clase (Operan sobre la colección completa) ---
+  // --- Métodos Estáticos / De Clase ---
 
-  // Buscar un usuario por su email de forma semántica
   static async buscarPorEmail(email) {
     return await this.findOne({ email });
   }
 
-  // Buscar un usuario por su ID excluyendo la contraseña por seguridad
   static async buscarPorId(id) {
     return await this.findById(id).select('-password');
   }
 
-  // Traer todos los usuarios (útil para la lista de jugadores) sin la contraseña
   static async obtenerTodos() {
     return await this.find().select('-password');
   }
@@ -115,7 +125,7 @@ class UserClass {
 // Vinculamos la clase al esquema de Mongoose
 UserSchema.loadClass(UserClass);
 
-// Middleware pre-save: Justo antes de impactar en la BD, ejecuta la encriptación
+// Middleware pre-save
 UserSchema.pre('save', async function() {
   try {
     await this.encriptarPassword();

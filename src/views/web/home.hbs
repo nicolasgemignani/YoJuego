@@ -44,27 +44,35 @@
 
           <div class="card-footer bg-transparent border-0 pb-3">
             {{#if ../isAuthenticated}}
-              {{#if this.yaInscripto}}
-                <form action="/partidos/{{this._id}}/bajarse" method="POST">
-                  <button type="submit" class="btn btn-danger w-100 shadow-sm">
-                    {{#if this.esSuplente}}❌ Salir de Lista de Espera{{else}}❌ Salir del Partido{{/if}}
-                  </button>
-                </form>
+              
+              {{#if this.puedeValorar}}
+                <a href="/web/votos/{{this._id}}/votar" class="btn btn-primary fw-bold w-100 shadow-sm">
+                  ⭐ Valorar Jugadores
+                </a>
               {{else}}
-                {{#if this.estaCompleto}}
-                  {{#if this.listaEsperaLlena}}
-                    <button class="btn btn-outline-secondary w-100" disabled>❌ Partido y Lista Llenos</button>
+                {{#if this.yaInscripto}}
+                  <form action="/partidos/{{this._id}}/bajarse" method="POST">
+                    <button type="submit" class="btn btn-danger w-100 shadow-sm">
+                      {{#if this.esSuplente}}❌ Salir de Lista de Espera{{else}}❌ Salir del Partido{{/if}}
+                    </button>
+                  </form>
+                {{else}}
+                  {{#if this.estaCompleto}}
+                    {{#if this.listaEsperaLlena}}
+                      <button class="btn btn-outline-secondary w-100" disabled>❌ Partido y Lista Llenos</button>
+                    {{else}}
+                      <form action="/partidos/{{this._id}}/unirse" method="POST">
+                        <button type="submit" class="btn btn-warning w-100 shadow-sm text-dark">⏳ Anotarse como Suplente</button>
+                      </form>
+                    {{/if}}
                   {{else}}
                     <form action="/partidos/{{this._id}}/unirse" method="POST">
-                      <button type="submit" class="btn btn-warning w-100 shadow-sm text-dark">⏳ Anotarse como Suplente</button>
+                      <button type="submit" class="btn btn-success w-100 shadow-sm">⚡ Unirme</button>
                     </form>
                   {{/if}}
-                {{else}}
-                  <form action="/partidos/{{this._id}}/unirse" method="POST">
-                    <button type="submit" class="btn btn-success w-100 shadow-sm">⚡ Unirme</button>
-                  </form>
                 {{/if}}
               {{/if}}
+
             {{else}}
               {{#if this.estaCompleto}}
                 {{#if this.listaEsperaLlena}}

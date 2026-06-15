@@ -36,12 +36,24 @@ hbs.registerHelper('logicaSumaUno', (index) => {
   return index + 1;
 });
 
+hbs.registerHelper('iniciales', function(nombre, apellido) {
+  if (!nombre || !apellido) return '';
+  return `${nombre.charAt(0)}${apellido.charAt(0)}`.toUpperCase();
+});
+
+hbs.registerHelper('lowercase', function(texto) {
+  if (!texto) return '';
+  return texto.toLowerCase();
+});
+
 // Definir el layout por defecto de forma global
 app.set('view options', { layout: 'layouts/main' });
 hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
 
 // Intentar conectar la Base de Datos antes de levantar el servidor
 await conectarDB();
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Rutas de la aplicacion
 app.use(indexRouter)

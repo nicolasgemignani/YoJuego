@@ -3,29 +3,45 @@ import matchService from '../../services/matchService.js';
 // US04 y US05: Renderizar el Dashboard con la cartelera de partidos
 export const mostrarDashboard = async (req, res) => {
   try {
-    const partidos = await matchService.obtenerPartidosActivos();
     const usuarioLogueadoId = res.locals.user ? res.locals.user._id.toString() : null;
 
+    // 💡 LLAMADO AL SERVICIO: Le pasamos el ID y nos devuelve los partidos con 'yaVoto'
+    const partidos = await matchService.obtenerPartidosConEstadoVoto(usuarioLogueadoId);
+    
+    const ahora = new Date();
+
     const partidosFormateados = partidos.map(partido => {
+      // 1. FUSIONAR FECHA Y HORA EVITANDO EL DESFASAJE UTC
+      const fechaString = new Date(partido.fecha).toISOString().split('T')[0];
+      const momentoPartido = new Date(`${fechaString}T${partido.hora}:00`);
+      const momentoFinalizacion = new Date(momentoPartido.getTime() + 90 * 60 * 1000);
+
+      // 2. ¿Ya pasó el tiempo del partido?
+      const yaTermino = ahora > momentoFinalizacion;
+
+      // 3. Lógica de cupos e inscripción original tuya
       const cuposLibres = partido.cupoMaximo - partido.jugadores.length;
       
       const esTitular = partido.jugadores?.some(j => j?._id?.toString() === usuarioLogueadoId) || false;
       const esSuplente = partido.suplentes?.some(s => s?._id?.toString() === usuarioLogueadoId) || false;
 
-      // 💡 CÁLCULO DE SUPLENTES Y CONTADORES
       const limiteSuplentes = partido.tipoCancha;
       const cantidadSuplentes = partido.suplentes?.length || 0;
       const listaEsperaLlena = cantidadSuplentes >= limiteSuplentes;
       const contadorSuplentes = `${cantidadSuplentes}/${limiteSuplentes}`;
 
+      // 💡 LÓGICA DE VOTACIÓN: Terminó, jugó de titular Y el servicio nos dice que NO VOTÓ todavía
+      const puedeValorar = yaTermino && esTitular && !partido.yaVoto;
+
       return {
         ...partido,
         fechaFormateada: new Date(partido.fecha).toLocaleDateString('es-AR', { timeZone: 'UTC' }),
-        cuposLibres,
+        cuposLibres: cuposLibres > 0 ? cuposLibres : 0,
         estaCompleto: partido.estado === 'completo' || cuposLibres <= 0,
         listaEsperaLlena,
-        contadorSuplentes, // 👈 Pasamos el "X/Y" para el badge de la Home
-        yaInscripto: esTitular || esSuplente,
+        contadorSuplentes,
+        puedeValorar, 
+        yaInscripto: !yaTermino && (esTitular || esSuplente),
         esSuplente,
         esCreador: partido.creador?._id?.toString() === usuarioLogueadoId
       };
@@ -34,10 +50,11 @@ export const mostrarDashboard = async (req, res) => {
     res.render('web/home', {
       partidos: partidosFormateados,
       error: req.query.error,
-      exito: req.query.exito
+      exito: req.query.exito || req.query.success
     });
 
   } catch (error) {
+    console.error("Error en mostrarDashboard:", error);
     res.render('web/home', { 
       error: 'Hubo un problema al cargar la cartelera de partidos.' 
     });

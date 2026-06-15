@@ -1,4 +1,5 @@
 import Match from '../models/Match.js';
+import Vote from '../models/Vote.js'; // Importamos el modelo de votos para la función de obtenerPartidosConEstadoVoto
 
 class MatchService {
   
@@ -73,6 +74,72 @@ class MatchService {
       .populate('jugadores', 'nombre apellido email posicion rango honor') // 👈 SUMAMOS NOMBRE Y APELLIDO
       .populate('suplentes', 'nombre apellido email posicion rango honor') // 👈 SUMAMOS NOMBRE Y APELLIDO
       .lean();
+  }
+
+  async obtenerPartidosConEstadoVoto(usuarioLogueadoId) {
+    // 1. Buscamos los partidos activos de la base de datos
+    const partidos = await Match.find().populate('jugadores').lean();
+
+    if (!usuarioLogueadoId) {
+      // Si no hay usuario logueado, ninguno tiene votos registrados
+      return partidos.map(p => ({ ...p, yaVoto: false }));
+    }
+
+    // 2. Buscamos qué partidos de esta lista ya fueron votados por este usuario
+    const partidosIds = partidos.map(p => p._id);
+    const votosEmitidos = await Vote.find({
+      votanteId: usuarioLogueadoId,
+      partidoId: { $in: partidosIds }
+    }).lean();
+
+    // Creamos un Set con los IDs de los partidos ya votados para buscar rápido
+    const partidosVotadosSet = new Set(votosEmitidos.map(v => v.partidoId.toString()));
+
+    // 3. Devolvemos los partidos inyectándole la propiedad 'yaVoto'
+    return partidos.map(partido => {
+      return {
+        ...partido,
+        yaVoto: partidosVotadosSet.has(partido._id.toString())
+      };
+    });
+  }
+
+  // Busca si el usuario debe la votación de algún partido en el que haya jugado
+  async obtenerPartidoPendienteDeVoto(usuarioLogueadoId) {
+    if (!usuarioLogueadoId) return null;
+
+    // 1. Buscamos todos los partidos de la base de datos
+    const partidos = await Match.find().populate('jugadores').lean();
+    const ahora = new Date();
+
+    // 2. Filtramos los partidos que ya terminaron (hace más de 90 min) y donde el usuario fue TITULAR
+    const partidosJugadosYTerminados = partidos.filter(partido => {
+      const fechaString = new Date(partido.fecha).toISOString().split('T')[0];
+      const momentoPartido = new Date(`${fechaString}T${partido.hora}:00`);
+      const momentoFinalizacion = new Date(momentoPartido.getTime() + 90 * 60 * 1000);
+      const yaTermino = ahora > momentoFinalizacion;
+
+      const esTitular = partido.jugadores?.some(j => j?._id?.toString() === usuarioLogueadoId.toString()) || false;
+
+      return yaTermino && esTitular;
+    });
+
+    if (partidosJugadosYTerminados.length === 0) return null;
+
+    // 3. De esos partidos que jugó, nos fijamos en la colección de Votos si ya dejó su huella
+    for (const partido of partidosJugadosYTerminados) {
+      const yaVoto = await Vote.exists({ 
+        partidoId: partido._id, 
+        votanteId: usuarioLogueadoId 
+      });
+
+      // 🔥 Si NO votó, encontramos al culpable. Retornamos este partido inmediatamente para obligarlo a votar.
+      if (!yaVoto) {
+        return partido; 
+      }
+    }
+
+    return null; // Está al día con todos los partidos
   }
 }
 
