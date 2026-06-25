@@ -2,20 +2,31 @@
   <div class="row justify-content-center">
     <div class="col-md-10 text-center">
       
-      <h2 class="fw-bold mb-2 text-uppercase">🎮 Valoración del Partido</h2>
-      <p class="text-muted mb-4">Elegí un máximo de 2 medallas para destacar a tus compañeros. ¡Sé justo!</p>
+      <span class="text-success-neon text-uppercase tracking-wider small fw-bold mb-2 d-block">Panel de Rendimiento</span>
+      <h2 class="fw-bold mb-2 text-uppercase text-white tracking-wide">Valoración del Encuentro</h2>
+      <p class="text-white-50 small mb-4">Elegí un máximo de 2 medallas para destacar a tus compañeros de equipo.</p>
 
       {{#if error}}
-        <div class="alert alert-danger mb-4" role="alert">❌ {{error}}</div>
+        <div class="alert custom-alert-minimal mb-4 text-start" role="alert">
+          <span class="alert-dot bg-danger border-danger shadow-danger me-3"></span>
+          <span class="small text-white-50">{{error}}</span>
+        </div>
       {{/if}}
 
-      <div class="alert alert-warning d-flex align-items-center justify-content-center gap-2 mb-5 shadow-sm" role="alert">
-        <span>⚠️ Recordá que si saltás la votación sin elegir a nadie, tu <strong>Honor bajará 2 puntos</strong>.</span>
+      <div class="row justify-content-center mb-5">
+        <div class="col-12 col-md-7">
+          <div class="custom-notice-badge d-flex align-items-center justify-content-center gap-2 py-2.5 px-4 rounded-pill shadow-sm">
+            <span class="notice-dot-orange me-1"></span>
+            <span class="font-xs text-white-75 text-uppercase tracking-wider">
+              Si saltás la votación, tu nivel de <strong class="text-orange">Honor será penalizado</strong>
+            </span>
+          </div>
+        </div>
       </div>
 
       <div class="row g-4 justify-content-center mb-5">
         {{#each jugadores}}
-          <div class="col-6 col-sm-4 col-md-3">
+          <div class="col-6 col-sm-4 col-md-3 col-lg-2.5 d-flex justify-content-center">
             <div class="fifa-card rango-{{lowercase this.rango}}" data-id="{{this._id}}" data-nombre="{{this.nombre}}">
               <div class="card-badge">{{this.posicion}}</div>
               <div class="card-initials">{{iniciales this.nombre this.apellido}}</div>
@@ -30,11 +41,11 @@
       </div>
 
       <div class="d-flex flex-column flex-sm-row justify-content-center gap-3">
-        <button id="btnEnviar" class="btn btn-success btn-lg px-5 fw-bold shadow" disabled>
+        <button id="btnEnviar" class="btn btn-success-neon px-5 py-2.5 custom-btn text-dark fw-bold" disabled>
           Enviar Valoraciones (<span id="countVotos">0</span>/2)
         </button>
-        <button id="btnSaltar" class="btn btn-outline-danger btn-lg px-4">
-          Saltar Votación (-2 Honor)
+        <button id="btnSaltar" class="btn btn-outline-orange px-4 py-2.5 custom-btn">
+          Saltar Votación
         </button>
       </div>
 
@@ -50,24 +61,24 @@
 
 <div class="modal fade" id="modalMedalla" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content shadow-lg border-0">
-      <div class="modal-header bg-dark text-white text-center d-block">
-        <h5 class="modal-title fw-bold">Asignar Medalla</h5>
-        <small id="modalJugadorNombre" class="text-muted"></small>
+    <div class="modal-content bg-dark-card border border-secondary border-opacity-10 shadow-lg">
+      <div class="modal-header border-bottom border-secondary border-opacity-10 text-center d-block py-3">
+        <h5 class="modal-title fw-bold text-white fs-6">Asignar Reconocimiento</h5>
+        <small id="modalJugadorNombre" class="text-white-50 font-xs"></small>
       </div>
       <div class="modal-body p-3">
         <div class="d-grid gap-2">
-          <button class="btn btn-outline-primary text-start btn-medalla" data-tipo="jugadorPartido">
+          <button class="btn btn-outline-secondary text-start btn-medalla text-white border-opacity-25" data-tipo="jugadorPartido">
             🏅 Jugador del Partido
           </button>
-          <button class="btn btn-outline-warning text-start btn-medalla" data-tipo="actitudEsfuerzo">
+          <button class="btn btn-outline-secondary text-start btn-medalla text-white border-opacity-25" data-tipo="actitudEsfuerzo">
             💪 Actitud / Esfuerzo
           </button>
-          <button class="btn btn-outline-success text-start btn-medalla" data-tipo="buenCompanero">
+          <button class="btn btn-outline-secondary text-start btn-medalla text-white border-opacity-25" data-tipo="buenCompanero">
             🤝 Buen Compañero
           </button>
-          <hr class="my-2">
-          <button id="btnQuitarVoto" class="btn btn-link text-danger btn-sm text-decoration-none">❌ Quitar medalla</button>
+          <hr class="my-2 border-secondary border-opacity-25">
+          <button id="btnQuitarVoto" class="btn btn-link text-warning-deportivo btn-sm text-decoration-none">Quitar medalla</button>
         </div>
       </div>
     </div>
@@ -76,16 +87,16 @@
 
 <div class="modal fade" id="modalConfirmarSalto" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content shadow-lg border-0">
-      <div class="modal-header bg-danger text-white text-center d-block">
-        <h5 class="modal-title fw-bold">⚠️ ¿Estás seguro?</h5>
+    <div class="modal-content bg-dark-card border border-secondary border-opacity-10 shadow-lg">
+      <div class="modal-header border-bottom border-danger border-opacity-20 text-center d-block py-3">
+        <h5 class="modal-title fw-bold text-warning-deportivo fs-6">Confirmar Acción</h5>
       </div>
       <div class="modal-body p-4 text-center">
-        <p class="mb-0 text-muted">Si saltás la votación de este partido, se aplicará una penalización directa en tu nivel de Honor.</p>
+        <p class="mb-0 text-white-50 small">Si saltás la votación de este partido, se aplicará una penalización automática en tu nivel de Honor.</p>
       </div>
-      <div class="modal-footer border-0 d-flex justify-content-center gap-2 pt-0">
-        <button type="button" class="btn btn-light px-3" data-bs-dismiss="modal">Volver</button>
-        <button type="button" id="btnConfirmarSaltoFinal" class="btn btn-danger px-3 fw-bold">Saltar de todas formas</button>
+      <div class="modal-footer border-0 d-flex justify-content-center gap-2 pt-0 pb-4">
+        <button type="button" class="btn btn-outline-secondary text-white border-opacity-25 px-3 btn-sm" data-bs-dismiss="modal">Volver</button>
+        <button type="button" id="btnConfirmarSaltoFinal" class="btn btn-outline-orange px-3 btn-sm">Saltar de todas formas</button>
       </div>
     </div>
   </div>

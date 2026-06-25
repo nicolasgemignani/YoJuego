@@ -70,7 +70,7 @@ class VoteService {
       }
     }
 
-    return { msg: 'Valoraciones processed con éxito. ¡Gracias por sumar a la comunidad!' };
+    return { msg: 'Valoracion procesada con éxito. ¡Gracias por sumar a la comunidad!' };
   }
 }
 

@@ -77,8 +77,12 @@ class MatchService {
   }
 
   async obtenerPartidosConEstadoVoto(usuarioLogueadoId) {
-    // 1. Buscamos los partidos activos de la base de datos
-    const partidos = await Match.find().populate('jugadores').lean();
+    // 1. Buscamos los partidos activos e inyectamos los populate necesarios (Igual que en obtenerPartidosActivos)
+    const partidos = await Match.find({ estado: { $ne: 'cancelado' } })
+      .populate('creador', 'nombre apellido email')
+      .populate('jugadores', 'nombre apellido email posicion rango honor')
+      .populate('suplentes', 'nombre apellido email posicion rango honor') // 💡 CLAVE: Ahora sí exponemos los suplentes
+      .lean();
 
     if (!usuarioLogueadoId) {
       // Si no hay usuario logueado, ninguno tiene votos registrados

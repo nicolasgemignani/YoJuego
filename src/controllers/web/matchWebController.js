@@ -5,41 +5,53 @@ export const mostrarDashboard = async (req, res) => {
   try {
     const usuarioLogueadoId = res.locals.user ? res.locals.user._id.toString() : null;
 
-    // 💡 LLAMADO AL SERVICIO: Le pasamos el ID y nos devuelve los partidos con 'yaVoto'
+    // Traemos los partidos usando tu método del Service
     const partidos = await matchService.obtenerPartidosConEstadoVoto(usuarioLogueadoId);
-    
     const ahora = new Date();
 
-    const partidosFormateados = partidos.map(partido => {
+    const partidosFormateados = partidos.map(p => {
+      // 💡 SOLUCIÓN: Limpiamos cualquier rastro de prototipos/getters extraños clonando de forma limpia
+      const partido = JSON.parse(JSON.stringify(p));
+
       // 1. FUSIONAR FECHA Y HORA EVITANDO EL DESFASAJE UTC
       const fechaString = new Date(partido.fecha).toISOString().split('T')[0];
       const momentoPartido = new Date(`${fechaString}T${partido.hora}:00`);
       const momentoFinalizacion = new Date(momentoPartido.getTime() + 90 * 60 * 1000);
 
-      // 2. ¿Ya pasó el tiempo o ya empezó?
       const yaTermino = ahora > momentoFinalizacion;
-      const yaEmpezo = ahora > momentoPartido; // 💡 Candado clave para que no se anoten si ya arrancó o pasó
+      const yaEmpezo = ahora > momentoPartido; 
 
-      // 3. Lógica de cupos e inscripción original tuya
-      const cuposLibres = partido.cupoMaximo - partido.jugadores.length;
-      const esTitular = partido.jugadores?.some(j => j?._id?.toString() === usuarioLogueadoId) || false;
-      const esSuplente = partido.suplentes?.some(s => s?._id?.toString() === usuarioLogueadoId) || false;
+      // 2. Conteo Blindado (Mapea bien si son Objetos u ObjectIds)
+      const totalTitulares = Array.isArray(partido.jugadores) ? partido.jugadores.length : 0;
+      const maxTitulares = partido.cupoMaximo || (partido.tipoCancha ? partido.tipoCancha * 2 : 10);
+      const cuposLibres = maxTitulares - totalTitulares;
 
-      const limiteSuplentes = partido.tipoCancha;
-      const cantidadSuplentes = partido.suplentes?.length || 0;
-      const listaEsperaLlena = cantidadSuplentes >= limiteSuplentes;
-      const contadorSuplentes = `${cantidadSuplentes}/${limiteSuplentes}`;
+      const totalSuplentes = Array.isArray(partido.suplentes) ? partido.suplentes.length : 0;
+      const maxSuplentes = partido.tipoCancha || 5; 
 
-      // 💡 FILTRO: El usuario perteneció al partido (histórico)
+      // 3. Cálculos de Porcentajes matemáticos limpios
+      const porcentajeTitulares = maxTitulares > 0 ? Math.min((totalTitulares / maxTitulares) * 100, 100) : 0;
+      const porcentajeSuplentes = maxSuplentes > 0 ? Math.min((totalSuplentes / maxSuplentes) * 100, 100) : 0;
+
+      // 4. Armamos los Strings que va a leer el HBS directamente
+      const contadorTitulares = `${totalTitulares}/${maxTitulares}`;
+      const contadorSuplentesStr = `${totalSuplentes}/${maxSuplentes}`;
+
+      // Comprobación segura de pertenencia (Contempla string puro u objeto populado)
+      const esTitular = partido.jugadores?.some(j => {
+        const id = j?._id ? j._id.toString() : j.toString();
+        return id === usuarioLogueadoId;
+      }) || false;
+
+      const esSuplente = partido.suplentes?.some(s => {
+        const id = s?._id ? s._id.toString() : s.toString();
+        return id === usuarioLogueadoId;
+      }) || false;
+
+      const listaEsperaLlena = totalSuplentes >= maxSuplentes;
       const pertenecioAlPartido = esTitular || esSuplente;
-
-      // 🔒 MODIFICACIÓN: "yaInscripto" activo para interactuar solo si NO empezó el partido
       const yaInscripto = !yaEmpezo && pertenecioAlPartido;
-
-      // 🛡️ CONTROL DE ACCIÓN: Solo se puede anotar si NO empezó, NO está inscripto y hay lugar
       const puedeAnotarse = !yaEmpezo && !pertenecioAlPartido && (cuposLibres > 0 || !listaEsperaLlena);
-
-      // 💡 LÓGICA DE VOTACIÓN: Terminó, jugó de titular Y el servicio nos dice que NO VOTÓ todavía
       const puedeValorar = yaTermino && esTitular && !partido.yaVoto;
 
       return {
@@ -48,48 +60,70 @@ export const mostrarDashboard = async (req, res) => {
         cuposLibres: cuposLibres > 0 ? cuposLibres : 0,
         estaCompleto: partido.estado === 'completo' || cuposLibres <= 0,
         listaEsperaLlena,
-        contadorSuplentes,
+        
+        // 📊 VARIABLES INYECTADAS EXPLICITAMENTE COMPLETAMENTE VISIBLES PARA HBS:
+        contadorTitulares,
+        contadorSuplentesStr,
+        porcentajeTitulares,
+        porcentajeSuplentes,
+        
+        yaTermino, // 💡 Agregado explícitamente para que funcionen los filtros .filter de abajo
         puedeValorar, 
-        puedeAnotarse, // 👈 Se lo mandamos a tu .hbs para renderizar condicionalmente el botón
-        yaInscripto,   // 👈 Ahora es un booleano limpio (true/false)
+        puedeAnotarse, 
+        yaInscripto,   
         pertenecioAlPartido,
         esSuplente,
         esCreador: partido.creador?._id?.toString() === usuarioLogueadoId
       };
     });
 
-    // 🔄 Separamos los partidos en dos grupos usando la bandera "yaTermino"
-    const partidosFuturos = partidosFormateados.filter(p => !p.yaTermino);
-    const partidosPasados = partidosFormateados.filter(p => p.yaTermino);
+    // =========================================================================
+    // 🗓️ CONTROL DE TOLERANCIA DE 24 HORAS PARA LA CARTELERA DEL DASHBOARD
+    // =========================================================================
+    const unDiaAtras = new Date(ahora.getTime() - 24 * 60 * 60 * 1000);
 
-    // 📅 1. Ordenar partidos FUTUROS: Cronológico Ascendente (El más cercano primero)
-    partidosFuturos.sort((a, b) => {
-      const deA = new Date(`${new Date(a.fecha).toISOString().split('T')[0]}T${a.hora}:00`);
-      const deB = new Date(`${new Date(b.fecha).toISOString().split('T')[0]}T${b.hora}:00`);
-      return deA - deB; // Ascendente
+    // 1. En la cartelera principal entran los futuros Y los partidos recientes de ayer (tolerancia)
+    const carteleraPrincipal = partidosFormateados.filter(p => {
+      const fechaString = new Date(p.fecha).toISOString().split('T')[0];
+      const momentoPartido = new Date(`${fechaString}T${p.hora}:00`);
+      
+      // Sigue visible si es del futuro O si pasó hace menos de 24 horas
+      return !p.yaTermino || momentoPartido >= unDiaAtras;
     });
 
-    // 📜 2. Ordenar partidos PASADOS (Historial): Cronológico Descendente (El más reciente primero)
-    partidosPasados.sort((a, b) => {
-      const deA = new Date(`${new Date(a.fecha).toISOString().split('T')[0]}T${a.hora}:00`);
-      const deB = new Date(`${new Date(b.fecha).toISOString().split('T')[0]}T${b.hora}:00`);
-      return deB - deA; // Descendente
+    // 2. Historial puro: partidos viejos que ya superaron el día de tolerancia
+    const historialViejo = partidosFormateados.filter(p => {
+      const fechaString = new Date(p.fecha).toISOString().split('T')[0];
+      const momentoPartido = new Date(`${fechaString}T${p.hora}:00`);
+      return p.yaTermino && momentoPartido < unDiaAtras;
     });
 
-    // 🚀 Juntamos los dos arrays: Primero la cartelera activa ordenada, abajo el historial ordenado
-    const carteleraFinal = [...partidosFuturos, ...partidosPasados];
+    // 3. Ordenamos la cartelera principal por fecha cronológica (los más próximos primero)
+    carteleraPrincipal.sort((a, b) => {
+      const deA = new Date(`${new Date(a.fecha).toISOString().split('T')[0]}T${a.hora}:00`);
+      const deB = new Date(`${new Date(b.fecha).toISOString().split('T')[0]}T${b.hora}:00`);
+      return deA - deB;
+    });
 
-    // 💡 SOLUCIÓN DEFINITIVA: Atajamos "exito" (como viene en tu URL) y también "success" por las dudas
+    // 4. El historial viejo lo ordenamos al revés (los últimos que pasaron primero)
+    historialViejo.sort((a, b) => {
+      const deA = new Date(`${new Date(a.fecha).toISOString().split('T')[0]}T${a.hora}:00`);
+      const deB = new Date(`${new Date(b.fecha).toISOString().split('T')[0]}T${b.hora}:00`);
+      return deB - deA;
+    });
+
+    // Juntamos todo para la vista, pero asegurando que los de ayer queden arriba en la cartelera
+    const carteleraFinal = [...carteleraPrincipal, ...historialViejo];
+    // =========================================================================
     const successMsg = req.query.exito || req.query.success || null;
     const errorMsg = req.query.error || null;
 
-    // 3. Renderizamos la vista con el array perfectamente acomodado
     res.render('web/home', {
-      partidos: carteleraFinal, // 👈 Lista cocinada, priorizada y limpia
+      partidos: carteleraFinal, 
       isAuthenticated: req.isAuthenticated(),
       user: res.locals.user,
-      success: successMsg,  // 👈 Clave para tu {{#if success}} de la vista
-      error: errorMsg       // 👈 Clave para tu {{#if error}} de la vista
+      success: successMsg,  
+      error: errorMsg       
     });
 
   } catch (error) {

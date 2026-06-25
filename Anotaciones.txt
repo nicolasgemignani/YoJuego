@@ -9,15 +9,3 @@ Correr el seed de usuarios -> npm run seed:users
 
 
 Tareas
-1. Emrpolijar msg cuando valoramos dice "processed" + mejorar msg de todo lo demas
-2. Botones de votar o saltar votacion, estan muy feos, sacar el "-2" de saltar
-3. Achicar Emblemas de los jugadores al votar
-4. El Home agregar seccion ilustrativa para promociones
-5. Mejorar navbar Que te saludo a tu nombre
-6. Hacer footer
-7. Mejorar Fondo hacerle estilo oscuro
-8. Agregar Logo
-9. Mejorar estetica Home
-10. Agregar un tiempo determinado para valorar jugadores del partido
-11. Agregar un tiempo determinado para que se borren los partido que ya se jugaron
-12. Preparar seed mas amplio para la presentacion, partidos completos, partidos que falte un suplente, que faltes vos para completar

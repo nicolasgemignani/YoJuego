@@ -1,83 +1,122 @@
-<div class="container mt-5">
+<div class="container mt-4">
   <div class="row justify-content-center">
-    <div class="col-md-8">
+    <div class="col-md-9 col-lg-8">
       
-      <a href="/" class="btn btn-outline-secondary btn-sm mb-4">⬅️ Volver a la Cartelera</a>
+      <a href="/" class="btn btn-outline-secondary btn-sm mb-4 px-3 custom-btn text-white-50 border-secondary border-opacity-25">
+        Volver a partidos
+      </a>
 
-      <div class="card shadow border-0">
+      <div class="card bg-dark-card border border-secondary border-opacity-10 shadow-lg">
         <div class="card-body p-4">
-          <h2 class="fw-bold text-success mb-3">🏟️ Detalle del Encuentro</h2>
-          <h4 class="text-dark">📍 {{partido.lugar}}</h4>
-          <p class="text-muted">Organizado por: <strong>{{partido.creador.nombre}} {{partido.creador.apellido}}</strong> ({{partido.creador.email}})</p>
           
-          <div class="row my-4 bg-light p-3 rounded">
-            <div class="col-6">🗓️ <strong>Fecha:</strong> {{partido.fechaFormateada}}</div>
-            <div class="col-6">⏰ <strong>Hora:</strong> {{partido.hora}} hs</div>
-            <div class="col-6 mt-2">⚽ <strong>Modalidad:</strong> Fútbol {{partido.tipoCancha}}</div>
-            <div class="col-6 mt-2">👥 <strong>Cupo Total:</strong> {{partido.cupoMaximo}} jugadores</div>
+          <div class="border-bottom border-secondary border-opacity-10 pb-3 mb-4">
+            <span class="text-success-neon text-uppercase tracking-wider small fw-bold mb-1 d-block">Detalle del Encuentro</span>
+            <h2 class="fw-bold text-white mb-2">📍 {{partido.lugar}}</h2>
+            <p class="small text-white-50 mb-0">
+              Organizado por: <span class="text-white fw-semibold">{{partido.creador.nombre}} {{partido.creador.apellido}}</span>
+            </p>
+          </div>
+          
+          <div class="row g-3 mb-4 bg-dark-principal p-3 rounded-3 border border-secondary border-opacity-10 mx-0">
+            <div class="col-6 col-sm-3">
+              <span class="d-block small text-white-50 text-uppercase tracking-wider footer-version">Fecha</span>
+              <strong class="text-white">{{partido.fechaFormateada}}</strong>
+            </div>
+            <div class="col-6 col-sm-3">
+              <span class="d-block small text-white-50 text-uppercase tracking-wider footer-version">Hora</span>
+              <strong class="text-white">{{partido.hora}} hs</strong>
+            </div>
+            <div class="col-6 col-sm-3">
+              <span class="d-block small text-white-50 text-uppercase tracking-wider footer-version">Modalidad</span>
+              <strong class="text-success-neon">Fútbol {{partido.tipoCancha}}</strong>
+            </div>
+            <div class="col-6 col-sm-3">
+              <span class="d-block small text-white-50 text-uppercase tracking-wider footer-version">Cupo Máximo</span>
+              <strong class="text-white">{{partido.cupoMaximo}} Jugadores</strong>
+            </div>
           </div>
 
-          <h5 class="fw-bold text-success mb-3">📋 Convocados Confirmados ({{partido.jugadores.length}}/{{partido.cupoMaximo}})</h5>
-          <ul class="list-group shadow-sm mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="fw-bold text-white small text-uppercase tracking-wide mb-0">Convocados Confirmados</h5>
+            <span class="badge bg-success bg-opacity-10 text-success-neon border border-success border-opacity-20 fw-bold">
+              {{partido.jugadores.length}} / {{partido.cupoMaximo}}
+            </span>
+          </div>
+          
+          <ul class="list-group border border-secondary border-opacity-10 rounded-3 mb-4 overflow-hidden">
             {{#each partido.jugadores}}
-              <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <li class="list-group-item bg-dark-principal border-secondary border-opacity-10 d-flex justify-content-between align-items-center py-3">
                 <div>
-                  <span class="fw-semibold text-dark">🏃‍♂️ {{this.nombre}} {{this.apellido}}</span>
-                  <span class="badge bg-secondary-subtle text-secondary border ms-2">🏅 {{this.rango}}</span>
-                  <span class="text-muted small ms-1">❤️ {{this.honor}} pts</span>
+                  <span class="fw-semibold text-white">{{this.nombre}} {{this.apellido}}</span>
+                  <span class="badge custom-badge-medal ms-2 font-xs" data-rango="{{this.rango}}">
+                    🏅 {{this.rango}}
+                  </span>
                 </div>
-                <span class="badge bg-success-subtle text-success border border-success px-3 py-2 rounded-pill">{{this.posicion}}</span>
+                <span class="badge bg-dark-card text-success-neon border border-success border-opacity-20 px-3 py-1.5 rounded-2 font-xs fw-bold">{{this.posicion}}</span>
               </li>
             {{/each}}
             {{#unless partido.jugadores.length}}
-              <li class="list-group-item text-muted text-center py-4">No hay jugadores anotados todavía. ¡Rompé el hielo!</li>
+              <li class="list-group-item bg-dark-principal border-secondary border-opacity-10 text-white-50 text-center py-4 fs-6">
+                No hay jugadores anotados todavía.
+              </li>
             {{/unless}}
           </ul>
 
-          <h5 class="fw-bold text-warning mb-3">⏳ Lista de Espera (Suplentes en cola)</h5>
-          <ul class="list-group shadow-sm mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="fw-bold text-white small text-uppercase tracking-wide mb-0">Lista de Espera</h5>
+            <span class="badge bg-warning bg-opacity-10 text-warning-deportivo border border-warning border-opacity-20 fw-bold">
+              Suplentes
+            </span>
+          </div>
+
+          <ul class="list-group border border-secondary border-opacity-10 rounded-3 mb-4 overflow-hidden">
             {{#each partido.suplentes}}
-              <li class="list-group-item d-flex justify-content-between align-items-center py-3 bg-light">
+              <li class="list-group-item bg-dark-principal border-secondary border-opacity-10 d-flex justify-content-between align-items-center py-3 opacity-75">
                 <div>
-                  <span class="text-muted fw-bold me-2">#{{logicaSumaUno @index}}</span>
-                  <span class="fw-semibold text-dark">🏃‍♂️ {{this.nombre}} {{this.apellido}}</span>
-                  <span class="badge bg-secondary-subtle text-secondary border ms-2">🏅 {{this.rango}}</span>
+                  <span class="text-warning-deportivo fw-bold me-2 font-xs">⏳ EN COLA</span>
+                  <span class="fw-semibold text-white">{{this.nombre}} {{this.apellido}}</span>
+                  <span class="badge custom-badge-medal ms-2 font-xs" data-rango="{{this.rango}}">
+                    🏅 {{this.rango}}
+                  </span>
                 </div>
-                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning px-3 py-2 rounded-pill">{{this.posicion}}</span>
+                <span class="badge bg-dark-card text-warning-deportivo border border-warning border-opacity-20 px-3 py-1.5 rounded-2 font-xs fw-bold">{{this.posicion}}</span>
               </li>
             {{/each}}
             {{#unless partido.suplentes.length}}
-              <li class="list-group-item text-muted text-center py-3 border-dashed">No hay suplentes en espera.</li>
+              <li class="list-group-item bg-dark-principal border-secondary border-opacity-10 text-white-50 text-center py-4 fs-6 border-dashed">
+                No hay suplentes en lista de espera.
+              </li>
             {{/unless}}
           </ul>
 
-          <div class="text-end mt-4">
+          <div class="border-top border-secondary border-opacity-10 pt-4 text-end">
             {{#if isAuthenticated}}
               {{#if partido.yaInscripto}}
                 <form action="/partidos/{{partido._id}}/bajarse" method="POST" class="d-inline">
-                  <button type="submit" class="btn btn-danger px-4">
-                    {{#if partido.esSuplente}}❌ Salir de Lista de Espera{{else}}❌ Darme de Baja{{/if}}
+                  <button type="submit" class="btn btn-outline-orange px-4 custom-btn">
+                    {{#if partido.esSuplente}}Salir de Lista de Espera{{else}}Darse de Baja del Partido{{/if}}
                   </button>
                 </form>
               {{else}}
                 {{#if partido.estaCompleto}}
                   {{#if partido.listaEsperaLlena}}
-                    <button class="btn btn-secondary px-4" disabled>❌ Partido y Lista Llenos</button>
+                    <button class="btn btn-outline-secondary px-4 custom-btn" disabled>Cupos y Espera Agotados</button>
                   {{else}}
                     <form action="/partidos/{{partido._id}}/unirse" method="POST" class="d-inline">
-                      <button type="submit" class="btn btn-warning px-4 text-dark">⏳ Anotarse como Suplente</button>
+                      <button type="submit" class="btn btn-outline-warning text-warning-deportivo px-4 custom-btn">Anotarse como Suplente</button>
                     </form>
                   {{/if}}
                 {{else}}
                   <form action="/partidos/{{partido._id}}/unirse" method="POST" class="d-inline">
-                    <button type="submit" class="btn btn-success px-4">⚡ Anotarme Ahora</button>
+                    <button type="submit" class="btn btn-success-neon px-4 custom-btn text-dark fw-bold">Anotarme Ahora</button>
                   </form>
                 {{/if}}
               {{/if}}
             {{else}}
-              <a href="/web/login" class="btn btn-success px-4">Iniciá sesión para anotarte</a>
+              <a href="/web/login" class="btn btn-success-neon px-4 custom-btn text-dark fw-bold">Iniciá sesión para anotarte</a>
             {{/if}}
           </div>
+
         </div>
       </div>
 
