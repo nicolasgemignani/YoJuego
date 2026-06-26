@@ -187,6 +187,7 @@ export const mostrarDetallePartido = async (req, res) => {
       listaEsperaLlena,
       contadorSuplentes, // 👈 Pasamos el contador también al detalle por si lo querés usar
       yaInscripto: esTitular || esSuplente,
+      esTitular,
       esSuplente,
       esCreador: partido.creador?._id?.toString() === usuarioLogueadoId
     };

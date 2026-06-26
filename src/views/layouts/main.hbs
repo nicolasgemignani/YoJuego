@@ -9,22 +9,22 @@
 </head>
 <body class="bg-dark-principal text-light-suave d-flex flex-column min-vh-100">
 
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark-card border-bottom border-secondary border-opacity-10 shadow-sm">
+  <nav class="navbar navbar-dark bg-dark-card border-bottom border-secondary border-opacity-10 shadow-sm">
     <div class="container">
       <a class="navbar-brand d-flex align-items-center fw-bold logo-texto-gradient" href="/">
-        <img src="/images/logo.jpg" alt="Logo Yo Juego" width="42" height="42" class="d-inline-block align-top me-2 rounded logo-img-blend my-auto">
+        <img src="/images/logo.jpg" alt="Logo Yo Juego" width="36" height="36" class="me-2 rounded logo-img-blend">
         YoJuego
       </a>
       
-      <div class="ms-auto d-flex align-items-center">
+      <div class="d-flex align-items-center">
         {{#if isAuthenticated}}
-          <span class="text-light-suave me-3 small">
+          <span class="text-light-suave me-2 small d-none d-sm-block text-truncate" style="max-width: 100px;">
             ¡Hola, <strong class="text-success-neon">{{#if user.nombre}}{{user.nombre}}{{else}}Crack{{/if}}</strong>!
           </span>
-          <a href="/web/logout" class="btn btn-outline-orange btn-sm custom-btn">Cerrar Sesión</a>
+          <a href="/web/logout" class="btn btn-outline-orange btn-sm custom-btn">Salir</a>
         {{else}}
-          <a href="/web/login" class="btn btn-success-neon btn-sm me-2 custom-btn">Ir al Login</a>
-          <a href="/web/register" class="btn btn-outline-orange btn-sm custom-btn">Registrarse</a>
+          <a href="/web/login" class="btn btn-success-neon btn-sm me-1 custom-btn">Login</a>
+          <a href="/web/register" class="btn btn-outline-orange btn-sm custom-btn">Registro</a>
         {{/if}}
       </div>
     </div>

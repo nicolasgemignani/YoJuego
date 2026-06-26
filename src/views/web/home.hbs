@@ -93,51 +93,52 @@
 
           <div class="card-footer bg-transparent border-0 pb-3">
             {{#if ../isAuthenticated}}
-              {{#if this.yaInscripto}}
-                <form action="/partidos/{{this._id}}/bajarse" method="POST">
-                  <button type="submit" class="btn btn-outline-orange w-100 custom-btn btn-sm">
-                    {{#if this.esSuplente}}Salir de Lista de Espera{{else}}Salir del Partido{{/if}}
+              
+              {{#if this.yaTermino}}
+                {{#if this.puedeValorar}}
+                  <a href="/web/votos/{{this._id}}/votar" class="btn btn-success-neon w-100 custom-btn btn-sm">Valorar Partido</a>
+                {{else}}
+                  <button class="btn btn-outline-secondary w-100 btn-sm custom-btn" disabled>
+                    {{#if this.esTitular}}Jugaste este partido{{else}}Partido finalizado{{/if}}
                   </button>
-                </form>
+                {{/if}}
+
               {{else}}
-                {{#if this.puedeAnotarse}}
-                  {{#if this.estaCompleto}}
-                    {{#if this.listaEsperaLlena}}
-                      <button class="btn btn-outline-secondary w-100 btn-sm custom-btn" disabled>Partido y Lista Llenos</button>
+                {{#if this.yaInscripto}}
+                  <form action="/partidos/{{this._id}}/bajarse" method="POST">
+                    <button type="submit" class="btn btn-outline-orange w-100 custom-btn btn-sm">
+                      {{#if this.esSuplente}}Salir de Lista de Espera{{else}}Salir del Partido{{/if}}
+                    </button>
+                  </form>
+                {{else}}
+                  {{#if this.puedeAnotarse}}
+                    {{#if this.estaCompleto}}
+                      {{#if this.listaEsperaLlena}}
+                        <button class="btn btn-outline-secondary w-100 btn-sm custom-btn" disabled>Partido y Lista Llenos</button>
+                      {{else}}
+                        <form action="/partidos/{{this._id}}/unirse" method="POST">
+                          <button type="submit" class="btn btn-outline-warning text-warning-deportivo w-100 custom-btn btn-sm">Anotarse como Suplente</button>
+                        </form>
+                      {{/if}}
                     {{else}}
                       <form action="/partidos/{{this._id}}/unirse" method="POST">
-                        <button type="submit" class="btn btn-outline-warning text-warning-deportivo w-100 custom-btn btn-sm">Anotarse como Suplente</button>
+                        <button type="submit" class="btn btn-success-neon w-100 custom-btn btn-sm">Unirme al Partido</button>
                       </form>
                     {{/if}}
                   {{else}}
-                    <form action="/partidos/{{this._id}}/unirse" method="POST">
-                      <button type="submit" class="btn btn-success-neon w-100 custom-btn btn-sm">Unirme al Partido</button>
-                    </form>
-                  {{/if}}
-                {{else}}
-                  {{#if this.estaCompleto}}
-                    <button class="btn btn-outline-secondary w-100 btn-sm custom-btn" disabled>Cupos y Espera Agotados</button>
-                  {{else}}
-                    {{#if this.pertenecioAlPartido}}
-                      <button class="btn btn-outline-success text-success-neon w-100 btn-sm custom-btn" disabled>Jugaste este partido</button>
-                    {{else}}
-                      <button class="btn btn-outline-secondary w-100 btn-sm custom-btn" disabled>Partido finalizado</button>
-                    {{/if}}
+                    <button class="btn btn-outline-secondary w-100 btn-sm custom-btn" disabled>Cerrado</button>
                   {{/if}}
                 {{/if}}
               {{/if}}
+
             {{else}}
               {{#if this.estaCompleto}}
-                {{#if this.listaEsperaLlena}}
-                  <a href="/web/login" class="btn btn-outline-secondary w-100 btn-sm custom-btn">Lleno • Iniciá sesión para ver</a>
-                {{else}}
-                  <a href="/web/login" class="btn btn-outline-orange w-100 btn-sm custom-btn">Iniciá sesión para ser suplente</a>
-                {{/if}}
+                <a href="/web/login" class="btn btn-outline-secondary w-100 btn-sm custom-btn">Lleno • Iniciá sesión</a>
               {{else}}
                 <a href="/web/login" class="btn btn-outline-success text-success-neon w-100 btn-sm custom-btn">Iniciá sesión para unirte</a>
               {{/if}}
             {{/if}}
-          </div> 
+          </div>
           
         </div> 
       </div> 

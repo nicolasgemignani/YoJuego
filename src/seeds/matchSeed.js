@@ -19,7 +19,7 @@ const complejos = [
   'Doble Cinco (Nuñez)'              // [9] Vacío / Disponible
 ];
 
-const horas = ['18:00', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '22:00', '22:30', '23:00'];
+const horas = ['18:00', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30', '12:00', '12:30', '13:00'];
 const tiposCancha = [5, 7, 11, 5, 5, 7, 5, 11, 5, 7];
 
 const sembrarPartidos = async () => {
@@ -47,7 +47,7 @@ const sembrarPartidos = async () => {
     // 3. Generar los 10 partidos base
     for (let i = 0; i < 10; i++) {
       const fechaPartido = new Date();
-      fechaPartido.setDate(fechaPartido.getDate() + (i % 4) + 1); // Asegura que sean fechas futuras
+      fechaPartido.setDate(fechaPartido.getDate() + (i % 4)); // Asegura que sean fechas futuras
 
       partidosFake.push({
         fecha: fechaPartido,

@@ -9,3 +9,8 @@ Correr el seed de usuarios -> npm run seed:users
 
 
 Tareas
+El carte que dice "Futbol 5" en el dashboard se pierde un poco, hay que hacerle algo para que se vea matches
+Frase "Quedan lugares Asegura tu lugar se hace un renglon abajo y queda feo.
+Lista de espera que el nombre al lado de En cola y abajo el apellido queda mal.
+Msg en valoracion "Elegí un máximo de 2 medallas para destacar a tus compañeros de equipo." -> La valoracion es para todos no solo para tu equipo, podes valorar rivales
+
